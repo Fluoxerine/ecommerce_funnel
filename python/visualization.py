@@ -33,14 +33,21 @@ STAGE_LABELS_SHORT = ['首页', '商品页', '购物车', '结账页', '确认�
 # 图 1: 全链路转化漏斗（plotly — 行业标准交互式漏斗图）
 # ================================================================
 def plot_funnel_plotly(funnel_df: pd.DataFrame) -> str:
+    # 构建带阶段名+会话数+转化率的标签
+    texts = []
+    for _, row in funnel_df.iterrows():
+        stage = row['漏斗阶段']
+        cnt = int(row['独立会话数'])
+        pct = row['整体转化率(%)']
+        texts.append(f"{stage}<br>{cnt:,} 会话 ({pct:.1f}%)")
     fig = px.funnel(
         funnel_df, x='独立会话数', y='漏斗阶段',
         title='全链路转化漏斗（会话维度）',
         color_discrete_sequence=[PRIMARY],
     )
     fig.update_traces(
-        textposition='inside', textfont_size=14,
-        texttemplate='%{value:,} 会话<br>%{percentInitial:.1%}',
+        text=texts,
+        textposition='inside', textfont_size=14, textinfo='text',
     )
     fig.update_layout(title_font_size=20, title_x=0.5, height=500)
     path = CHART_DIR / '01_funnel_plotly.html'
@@ -70,24 +77,27 @@ def plot_funnel_static(funnel_df: pd.DataFrame) -> str:
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 50,
                 f'{int(c):,}\n({rate:.1f}%)', ha='center', fontsize=10, fontweight='bold')
 
-    # 右：逐级转化率折线
+    # 右：逐级转化率折线（仅 4 个环节）
     ax2 = axes[1]
-    step_rates = funnel_df['上一阶段转化率(%)'].values
-    x = range(len(stages))
-    ax2.plot(x, step_rates, 'o-', color=ACCENT, linewidth=2.5, markersize=10,
-             markerfacecolor='white', markeredgewidth=2)
+    step_rates = funnel_df['上一阶段转化率(%)'].values[1:]  # 跳过首页 100%
+    step_labels = [f'{a}\n→ {b}' for a, b in zip(stages[:-1], stages[1:])]
+    x = range(len(step_labels))
+    ax2.plot(x, step_rates, 'o-', color=ACCENT, linewidth=2.5, markersize=12,
+             markerfacecolor='white', markeredgewidth=2.5)
     ax2.fill_between(x, step_rates, alpha=0.1, color=ACCENT)
     ax2.set_xticks(x)
-    ax2.set_xticklabels([f'{s}\n→\n{t}' if i < 4 else s
-                         for i, (s, t) in enumerate(zip(stages, stages[1:] + ['']))], fontsize=9)
-    ax2.set_ylabel('逐级转化率 (%)', fontsize=12)
+    ax2.set_xticklabels(step_labels, fontsize=11)
+    ax2.set_ylabel('环节转化率 (%)', fontsize=12)
     ax2.set_title('各环节逐级转化率', fontsize=14, pad=15)
     ax2.set_ylim(0, 105)
     for i, r in enumerate(step_rates):
         ax2.annotate(f'{r:.1f}%', (i, r), textcoords="offset points",
-                     xytext=(0, 14), ha='center', fontsize=11, fontweight='bold',
+                     xytext=(0, 16), ha='center', fontsize=12, fontweight='bold',
                      color=ACCENT if i == step_rates.argmin() else '#333')
     ax2.axhline(y=50, color='#999', linestyle=':', alpha=0.5)
+    ax2.axhline(y=step_rates.mean(), color=PRIMARY, linestyle='--', alpha=0.4,
+                label=f'均值 {step_rates.mean():.1f}%')
+    ax2.legend(fontsize=9)
 
     fig.suptitle('电商全链路转化漏斗分析', fontsize=17, fontweight='bold', y=1.02)
     plt.tight_layout()

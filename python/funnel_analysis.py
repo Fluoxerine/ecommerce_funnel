@@ -90,7 +90,16 @@ def compute_device_analysis(funnel_wide: pd.DataFrame) -> pd.DataFrame:
 
 
 def compute_duration_analysis(df_cleaned: pd.DataFrame) -> pd.DataFrame:
-    """停留时长与转化率关系（等频分桶）"""
+    """停留时长与转化率关系（行为阈值分桶，符合行业标准）
+
+    CRO 行业常用固定行为阈值而非等频分桶：
+    - <60s: 快速跳出，几乎无购买意向
+    - 60-180s: 浅层浏览，仅扫视少量页面
+    - 180-420s: 中度参与，有明确浏览行为
+    - 420s+: 深度决策，高概率转化
+
+    参考：GA4 Engagement Time、Amplitude Behavioral Cohorts
+    """
     logger.info("=" * 60)
     logger.info("8. 停留时长与转化率分析")
     logger.info("=" * 60)
@@ -100,20 +109,18 @@ def compute_duration_analysis(df_cleaned: pd.DataFrame) -> pd.DataFrame:
         是否转化=('session_is_converted', 'max'),
     )
 
-    q25 = session_dur['总停留时长'].quantile(0.25)
-    q50 = session_dur['总停留时长'].quantile(0.50)
-    q75 = session_dur['总停留时长'].quantile(0.75)
-    qmax = session_dur['总停留时长'].max()
+    thresholds = [0, 60, 180, 420, float('inf')]
+    labels = [
+        '快速跳出 (<60s)',
+        '浅层浏览 (60-180s)',
+        '中度参与 (180-420s)',
+        '深度决策 (420s+)',
+    ]
 
     session_dur['时长分桶'] = pd.cut(
         session_dur['总停留时长'],
-        bins=[0, q25, q50, q75, qmax],
-        labels=[
-            f'快速浏览 (0-{int(q25)}s)',
-            f'浅层参与 ({int(q25)}-{int(q50)}s)',
-            f'中度参与 ({int(q50)}-{int(q75)}s)',
-            f'深度决策 ({int(q75)}-{int(qmax)}s)',
-        ],
+        bins=thresholds,
+        labels=labels,
     )
 
     result = session_dur.groupby('时长分桶', observed=True).agg(
