@@ -1,0 +1,10 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/pagesMetadata/1.0.0/schema.json",
+  "pageOrder": [
+    "funnel_health",
+    "traffic_quality",
+    "churn_diagnostics",
+    "priority_matrix"
+  ],
+  "activePageName": "funnel_health"
+}

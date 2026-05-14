@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "artifacts": [
+    {
+      "report": {
+        "path": "Ecommerce Funnel CRO.Report"
+      }
+    }
+  ]
+}
