@@ -1,0 +1,10 @@
+pandas
+numpy
+matplotlib
+seaborn
+plotly
+scipy
+sqlalchemy
+pymysql
+python-dotenv
+pytest
