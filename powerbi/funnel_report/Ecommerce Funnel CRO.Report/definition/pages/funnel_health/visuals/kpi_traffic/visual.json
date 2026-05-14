@@ -17,25 +17,6 @@
           "projections": [
             {
               "field": {
-                "Aggregation": {
-                  "Expression": {
-                    "Column": {
-                      "Expression": {
-                        "SourceRef": {
-                          "Entity": "funnel_overview"
-                        }
-                      },
-                      "Property": "step1_home"
-                    }
-                  },
-                  "Function": 0
-                }
-              },
-              "queryRef": "Sum(funnel_overview.step1_home)",
-              "nativeQueryRef": "step1_home 的总和"
-            },
-            {
-              "field": {
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
@@ -46,87 +27,33 @@
                 }
               },
               "queryRef": "funnel_overview.首页会话",
-              "nativeQueryRef": "首页会话"
+              "nativeQueryRef": "首页会话",
+              "format": "#,##0"
             }
           ]
         }
-      },
-      "sortDefinition": {
-        "sort": [
-          {
-            "field": {
-              "Aggregation": {
-                "Expression": {
-                  "Column": {
-                    "Expression": {
-                      "SourceRef": {
-                        "Entity": "funnel_overview"
-                      }
-                    },
-                    "Property": "step1_home"
-                  }
-                },
-                "Function": 0
-              }
-            },
-            "direction": "Descending"
-          }
-        ],
-        "isDefaultSort": true
       }
     },
     "visualContainerObjects": {
       "title": [
         {
           "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "text": {
-              "expr": {
-                "Literal": {
-                  "Value": "'总流量'"
-                }
-              }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "20D"
-                }
-              }
-            }
+            "show": { "expr": { "Literal": { "Value": "true" } } },
+            "text": { "expr": { "Literal": { "Value": "'总流量'" } } },
+            "fontSize": { "expr": { "Literal": { "Value": "14D" } } }
+          }
+        }
+      ],
+      "labels": [
+        {
+          "properties": {
+            "show": { "expr": { "Literal": { "Value": "true" } } },
+            "fontSize": { "expr": { "Literal": { "Value": "36D" } } },
+            "color": { "expr": { "Literal": { "Value": "'#2E86AB'" } } }
           }
         }
       ]
     },
     "drillFilterOtherVisuals": true
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "e43dd2f588476b7c21e7",
-        "field": {
-          "Aggregation": {
-            "Expression": {
-              "Column": {
-                "Expression": {
-                  "SourceRef": {
-                    "Entity": "funnel_overview"
-                  }
-                },
-                "Property": "step1_home"
-              }
-            },
-            "Function": 0
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

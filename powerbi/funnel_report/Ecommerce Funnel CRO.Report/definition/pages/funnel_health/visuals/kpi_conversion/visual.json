@@ -28,91 +28,32 @@
               },
               "queryRef": "funnel_overview.转化率",
               "nativeQueryRef": "转化率",
-              "format": "0.00%;-0.00%;0.00%"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "funnel_overview"
-                    }
-                  },
-                  "Property": "转化率"
-                }
-              },
-              "queryRef": "funnel_overview.转化率",
-              "nativeQueryRef": "转化率"
+              "format": "0.00%"
             }
           ]
         }
-      },
-      "sortDefinition": {
-        "sort": [
-          {
-            "field": {
-              "Measure": {
-                "Expression": {
-                  "SourceRef": {
-                    "Entity": "funnel_overview"
-                  }
-                },
-                "Property": "转化率"
-              }
-            },
-            "direction": "Descending"
-          }
-        ],
-        "isDefaultSort": true
       }
     },
     "visualContainerObjects": {
       "title": [
         {
           "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "text": {
-              "expr": {
-                "Literal": {
-                  "Value": "'总转化率'"
-                }
-              }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "20D"
-                }
-              }
-            }
+            "show": { "expr": { "Literal": { "Value": "true" } } },
+            "text": { "expr": { "Literal": { "Value": "'总转化率'" } } },
+            "fontSize": { "expr": { "Literal": { "Value": "14D" } } }
+          }
+        }
+      ],
+      "labels": [
+        {
+          "properties": {
+            "show": { "expr": { "Literal": { "Value": "true" } } },
+            "fontSize": { "expr": { "Literal": { "Value": "36D" } } },
+            "color": { "expr": { "Literal": { "Value": "'#27AE60'" } } }
           }
         }
       ]
     },
     "drillFilterOtherVisuals": true
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "a888ab3a3eb7335f9e55",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "funnel_overview"
-              }
-            },
-            "Property": "转化率"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

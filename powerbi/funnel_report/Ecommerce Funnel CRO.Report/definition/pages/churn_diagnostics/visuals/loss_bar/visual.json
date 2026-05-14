@@ -1,5 +1,5 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "loss_bar",
   "position": {
     "x": 50,
@@ -36,22 +36,87 @@
           "projections": [
             {
               "field": {
-                "Measure": {
+                "Aggregation": {
                   "Expression": {
-                    "SourceRef": {
-                      "Entity": "loss_data"
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "loss_data"
+                        }
+                      },
+                      "Property": "损失金额"
                     }
                   },
-                  "Property": "损失金额"
+                  "Function": 0
                 }
               },
-              "queryRef": "loss_data.损失金额",
-              "nativeQueryRef": "损失金额"
+              "queryRef": "Sum(loss_data.损失金额)",
+              "nativeQueryRef": "损失金额 的总和"
             }
           ]
         }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Aggregation": {
+                "Expression": {
+                  "Column": {
+                    "Expression": {
+                      "SourceRef": {
+                        "Entity": "loss_data"
+                      }
+                    },
+                    "Property": "损失金额"
+                  }
+                },
+                "Function": 0
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
       }
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "00a5d42ddc96fbdda20e",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "loss_data"
+              }
+            },
+            "Property": "流失环节"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "358ca37a2d68e8532150",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "loss_data"
+                  }
+                },
+                "Property": "损失金额"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

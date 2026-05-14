@@ -1,12 +1,12 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "pie_bar",
   "position": {
-    "x": 640,
-    "y": 50,
+    "x": 0,
+    "y": 0,
     "z": 1,
-    "height": 550,
-    "width": 330,
+    "height": 384,
+    "width": 1280,
     "tabOrder": 1
   },
   "visual": {
@@ -36,22 +36,87 @@
           "projections": [
             {
               "field": {
-                "Measure": {
+                "Aggregation": {
                   "Expression": {
-                    "SourceRef": {
-                      "Entity": "loss_data"
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "loss_data"
+                        }
+                      },
+                      "Property": "PIE得分"
                     }
                   },
-                  "Property": "PIE得分"
+                  "Function": 0
                 }
               },
-              "queryRef": "loss_data.PIE得分",
-              "nativeQueryRef": "PIE得分"
+              "queryRef": "Sum(loss_data.PIE得分)",
+              "nativeQueryRef": "PIE得分 的总和"
             }
           ]
         }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Aggregation": {
+                "Expression": {
+                  "Column": {
+                    "Expression": {
+                      "SourceRef": {
+                        "Entity": "loss_data"
+                      }
+                    },
+                    "Property": "PIE得分"
+                  }
+                },
+                "Function": 0
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
       }
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "c91be782f59dcfc9b6f3",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "loss_data"
+              }
+            },
+            "Property": "流失环节"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "c81eeaedaf16cc27b75b",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "loss_data"
+                  }
+                },
+                "Property": "PIE得分"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

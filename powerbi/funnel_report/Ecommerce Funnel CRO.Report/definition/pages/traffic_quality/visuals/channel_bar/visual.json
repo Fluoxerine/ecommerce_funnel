@@ -6,7 +6,7 @@
     "y": 0,
     "z": 0,
     "height": 384,
-    "width": 640,
+    "width": 624,
     "tabOrder": 0
   },
   "visual": {
@@ -68,20 +68,6 @@
               "queryRef": "CountNonNull(channel_analysis.conversion_rate)",
               "nativeQueryRef": "conversion_rate",
               "displayName": "conversion_rate"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "channel_analysis"
-                    }
-                  },
-                  "Property": "conversion_rate"
-                }
-              },
-              "queryRef": "channel_analysis.conversion_rate",
-              "nativeQueryRef": "conversion_rate"
             }
           ]
         }

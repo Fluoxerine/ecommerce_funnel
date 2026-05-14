@@ -1,12 +1,12 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "churn_table",
   "position": {
-    "x": 530,
-    "y": 380,
+    "x": 0,
+    "y": 352,
     "z": 2,
-    "height": 250,
-    "width": 440,
+    "height": 352,
+    "width": 1264,
     "tabOrder": 2
   },
   "visual": {
@@ -17,7 +17,7 @@
           "projections": [
             {
               "field": {
-                "Measure": {
+                "Column": {
                   "Expression": {
                     "SourceRef": {
                       "Entity": "funnel_wide_export"
@@ -31,7 +31,7 @@
             },
             {
               "field": {
-                "Measure": {
+                "Column": {
                   "Expression": {
                     "SourceRef": {
                       "Entity": "funnel_wide_export"
@@ -45,7 +45,7 @@
             },
             {
               "field": {
-                "Measure": {
+                "Column": {
                   "Expression": {
                     "SourceRef": {
                       "Entity": "funnel_wide_export"
@@ -59,7 +59,7 @@
             },
             {
               "field": {
-                "Measure": {
+                "Column": {
                   "Expression": {
                     "SourceRef": {
                       "Entity": "funnel_wide_export"
@@ -73,64 +73,296 @@
             },
             {
               "field": {
-                "Measure": {
+                "Aggregation": {
                   "Expression": {
-                    "SourceRef": {
-                      "Entity": "funnel_wide_export"
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_wide_export"
+                        }
+                      },
+                      "Property": "step1_home"
                     }
                   },
-                  "Property": "step2_product"
+                  "Function": 0
                 }
               },
-              "queryRef": "funnel_wide_export.step2_product",
-              "nativeQueryRef": "step2_product"
+              "queryRef": "Sum(funnel_wide_export.step1_home)",
+              "nativeQueryRef": "step1_home 的总和"
             },
             {
               "field": {
-                "Measure": {
+                "Aggregation": {
                   "Expression": {
-                    "SourceRef": {
-                      "Entity": "funnel_wide_export"
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_wide_export"
+                        }
+                      },
+                      "Property": "step2_product"
                     }
                   },
-                  "Property": "step3_cart"
+                  "Function": 0
                 }
               },
-              "queryRef": "funnel_wide_export.step3_cart",
-              "nativeQueryRef": "step3_cart"
+              "queryRef": "Sum(funnel_wide_export.step2_product)",
+              "nativeQueryRef": "step2_product 的总和"
             },
             {
               "field": {
-                "Measure": {
+                "Aggregation": {
                   "Expression": {
-                    "SourceRef": {
-                      "Entity": "funnel_wide_export"
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_wide_export"
+                        }
+                      },
+                      "Property": "step3_cart"
                     }
                   },
-                  "Property": "step4_checkout"
+                  "Function": 0
                 }
               },
-              "queryRef": "funnel_wide_export.step4_checkout",
-              "nativeQueryRef": "step4_checkout"
+              "queryRef": "Sum(funnel_wide_export.step3_cart)",
+              "nativeQueryRef": "step3_cart 的总和"
             },
             {
               "field": {
-                "Measure": {
+                "Aggregation": {
                   "Expression": {
-                    "SourceRef": {
-                      "Entity": "funnel_wide_export"
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_wide_export"
+                        }
+                      },
+                      "Property": "step4_checkout"
                     }
                   },
-                  "Property": "is_purchased"
+                  "Function": 0
                 }
               },
-              "queryRef": "funnel_wide_export.is_purchased",
-              "nativeQueryRef": "is_purchased"
+              "queryRef": "Sum(funnel_wide_export.step4_checkout)",
+              "nativeQueryRef": "step4_checkout 的总和"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_wide_export"
+                        }
+                      },
+                      "Property": "step5_confirm"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(funnel_wide_export.step5_confirm)",
+              "nativeQueryRef": "step5_confirm 的总和"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_wide_export"
+                        }
+                      },
+                      "Property": "is_purchased"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(funnel_wide_export.is_purchased)",
+              "nativeQueryRef": "is_purchased 的总和"
             }
           ]
         }
       }
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "355892be1738062a639c",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "funnel_wide_export"
+              }
+            },
+            "Property": "SessionID"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "b80b8b7ebdbf7caaf268",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "funnel_wide_export"
+              }
+            },
+            "Property": "ReferralSource"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "417a316a5e6bfaaea1ab",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "funnel_wide_export"
+              }
+            },
+            "Property": "DeviceType"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "ca265d283736cfd682b4",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "funnel_wide_export"
+              }
+            },
+            "Property": "Country"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "8d1c4130d52447c20338",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "funnel_wide_export"
+                  }
+                },
+                "Property": "step1_home"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "96a60fa14a721948829c",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "funnel_wide_export"
+                  }
+                },
+                "Property": "step2_product"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "f8305473b878c16ced8d",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "funnel_wide_export"
+                  }
+                },
+                "Property": "step3_cart"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "0d2cc4a6c612d1157a19",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "funnel_wide_export"
+                  }
+                },
+                "Property": "step4_checkout"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "951d298e04ccdedeea60",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "funnel_wide_export"
+                  }
+                },
+                "Property": "step5_confirm"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "baddb3f77ecc3c0cf2ff",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "funnel_wide_export"
+                  }
+                },
+                "Property": "is_purchased"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

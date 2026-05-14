@@ -1,12 +1,12 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "churn_by_dim",
   "position": {
-    "x": 50,
-    "y": 380,
+    "x": 768,
+    "y": 80,
     "z": 1,
-    "height": 250,
-    "width": 440,
+    "height": 240,
+    "width": 432,
     "tabOrder": 1
   },
   "visual": {
@@ -36,22 +36,87 @@
           "projections": [
             {
               "field": {
-                "Measure": {
+                "Aggregation": {
                   "Expression": {
-                    "SourceRef": {
-                      "Entity": "funnel_wide_export"
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_wide_export"
+                        }
+                      },
+                      "Property": "is_purchased"
                     }
                   },
-                  "Property": "is_purchased"
+                  "Function": 0
                 }
               },
-              "queryRef": "funnel_wide_export.is_purchased",
-              "nativeQueryRef": "is_purchased"
+              "queryRef": "Sum(funnel_wide_export.is_purchased)",
+              "nativeQueryRef": "is_purchased 的总和"
             }
           ]
         }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Aggregation": {
+                "Expression": {
+                  "Column": {
+                    "Expression": {
+                      "SourceRef": {
+                        "Entity": "funnel_wide_export"
+                      }
+                    },
+                    "Property": "is_purchased"
+                  }
+                },
+                "Function": 0
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
       }
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "d79e44d3fa5bbe6385fd",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "funnel_wide_export"
+              }
+            },
+            "Property": "ReferralSource"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "a50b1b17a6d1ae7ac32c",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "funnel_wide_export"
+                  }
+                },
+                "Property": "is_purchased"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

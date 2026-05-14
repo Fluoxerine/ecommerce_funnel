@@ -137,83 +137,7 @@
           ]
         },
         "value": {
-          "projections": [
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "funnel_overview"
-                    }
-                  },
-                  "Property": "首页会话"
-                }
-              },
-              "queryRef": "funnel_overview.首页会话",
-              "nativeQueryRef": "首页会话",
-              "active": true
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "funnel_overview"
-                    }
-                  },
-                  "Property": "商品页会话"
-                }
-              },
-              "queryRef": "funnel_overview.商品页会话",
-              "nativeQueryRef": "商品页会话",
-              "active": true
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "funnel_overview"
-                    }
-                  },
-                  "Property": "购物车会话"
-                }
-              },
-              "queryRef": "funnel_overview.购物车会话",
-              "nativeQueryRef": "购物车会话",
-              "active": true
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "funnel_overview"
-                    }
-                  },
-                  "Property": "结账页会话"
-                }
-              },
-              "queryRef": "funnel_overview.结账页会话",
-              "nativeQueryRef": "结账页会话",
-              "active": true
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "funnel_overview"
-                    }
-                  },
-                  "Property": "确认页会话"
-                }
-              },
-              "queryRef": "funnel_overview.确认页会话",
-              "nativeQueryRef": "确认页会话",
-              "active": true
-            }
-          ]
+          "projections": []
         }
       },
       "sortDefinition": {
@@ -436,6 +360,20 @@
           }
         },
         "type": "Advanced"
+      },
+      {
+        "name": "44c4d50b38ed7fd06ab4",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "漏斗步骤"
+              }
+            },
+            "Property": "页面步骤"
+          }
+        },
+        "type": "Categorical"
       }
     ]
   }

@@ -28,106 +28,32 @@
               },
               "queryRef": "funnel_overview.损失金额",
               "nativeQueryRef": "损失金额",
-              "format": "\"¥\"#,0.###############;\"¥\"-#,0.###############;\"¥\"#,0.###############"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "funnel_overview"
-                    }
-                  },
-                  "Property": "损失金额"
-                }
-              },
-              "queryRef": "funnel_overview.损失金额",
-              "nativeQueryRef": "损失金额"
+              "format": "\"¥\"#,##0"
             }
           ]
         }
-      },
-      "sortDefinition": {
-        "sort": [
-          {
-            "field": {
-              "Measure": {
-                "Expression": {
-                  "SourceRef": {
-                    "Entity": "funnel_overview"
-                  }
-                },
-                "Property": "损失金额"
-              }
-            },
-            "direction": "Descending"
-          }
-        ],
-        "isDefaultSort": true
       }
-    },
-    "objects": {
-      "labels": [
-        {
-          "properties": {
-            "labelDisplayUnits": {
-              "expr": {
-                "Literal": {
-                  "Value": "1D"
-                }
-              }
-            }
-          }
-        }
-      ]
     },
     "visualContainerObjects": {
       "title": [
         {
           "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "text": {
-              "expr": {
-                "Literal": {
-                  "Value": "'总损失金额'"
-                }
-              }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "20D"
-                }
-              }
-            }
+            "show": { "expr": { "Literal": { "Value": "true" } } },
+            "text": { "expr": { "Literal": { "Value": "'流失损失'" } } },
+            "fontSize": { "expr": { "Literal": { "Value": "14D" } } }
+          }
+        }
+      ],
+      "labels": [
+        {
+          "properties": {
+            "show": { "expr": { "Literal": { "Value": "true" } } },
+            "fontSize": { "expr": { "Literal": { "Value": "36D" } } },
+            "color": { "expr": { "Literal": { "Value": "'#E74C3C'" } } }
           }
         }
       ]
     },
     "drillFilterOtherVisuals": true
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "279455f0f9af6ef20bfe",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "funnel_overview"
-              }
-            },
-            "Property": "损失金额"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

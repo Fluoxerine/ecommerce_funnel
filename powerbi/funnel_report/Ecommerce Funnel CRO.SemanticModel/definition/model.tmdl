@@ -18,4 +18,5 @@ ref table device_analysis
 ref table funnel_overview
 ref table funnel_wide_export
 ref table 漏斗步骤
+ref table loss_data
 

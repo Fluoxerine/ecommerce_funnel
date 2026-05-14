@@ -68,20 +68,6 @@
               "queryRef": "CountNonNull(device_analysis.conversion_rate)",
               "nativeQueryRef": "conversion_rate",
               "displayName": "conversion_rate"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "device_analysis"
-                    }
-                  },
-                  "Property": "conversion_rate"
-                }
-              },
-              "queryRef": "device_analysis.conversion_rate",
-              "nativeQueryRef": "conversion_rate"
             }
           ]
         }

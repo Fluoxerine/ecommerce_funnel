@@ -22,7 +22,7 @@ table loss_data
 
 	column 损失金额
 		dataType: int64
-		formatString: "¥#,##0"
+		formatString: ¥#,##0
 		lineageTag: c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8
 		summarizeBy: sum
 		isNameInferred
@@ -71,7 +71,7 @@ table loss_data
 	partition loss_data = calculated
 		mode: import
 		source =
-
+				
 				DATATABLE(
 				    "流失环节", STRING,
 				    "流失会话数", INTEGER,
@@ -89,3 +89,4 @@ table loss_data
 				)
 
 	annotation PBI_Id = 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7
+

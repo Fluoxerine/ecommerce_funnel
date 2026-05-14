@@ -3,9 +3,9 @@
   "name": "channel_device_matrix",
   "position": {
     "x": 0,
-    "y": 384,
+    "y": 400,
     "z": 2,
-    "height": 272,
+    "height": 288,
     "width": 640,
     "tabOrder": 2
   },
@@ -86,20 +86,6 @@
               },
               "queryRef": "Sum(funnel_wide_export.is_purchased)",
               "nativeQueryRef": "is_purchased 的总和"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "funnel_wide_export"
-                    }
-                  },
-                  "Property": "is_purchased"
-                }
-              },
-              "queryRef": "funnel_wide_export.is_purchased",
-              "nativeQueryRef": "is_purchased"
             }
           ]
         }
