@@ -1,38 +1,86 @@
-# CRO Methodology
+# CRO 分析方法论
 
-## 1. Funnel Analysis
+## 一、漏斗分析方法
 
-Classic AARRR funnel (Acquisition -> Activation -> Revenue), 5 key touchpoints:
+采用经典 AARRR 海盗指标模型的前三段（获客 → 激活 → 收入），聚焦电商场景的 5 个关键行为节点：
 
 ```
-Home -> Product Page -> Cart -> Checkout -> Confirmation
+访问首页 → 浏览商品 → 加入购物车 → 提交订单 → 支付成功
 ```
 
-Each stage counts unique sessions (session counted once per stage). Conversion rate = next stage / current stage.
+### 计算规则
 
-## 2. Revenue Loss Quantification
+- **会话维度统计**：同一会话在同一节点只计一次（去重），避免因同一会话多次访问同一页面而放大数据
+- **逐级转化率** = 下一节点会话数 / 当前节点会话数 × 100%
+- **整体转化率** = 支付成功会话数 / 访问首页会话数 × 100%
 
-Cart abandonment value calculation (CRO standard):
+### 为什么不用"行为顺序校验"
 
-- **Browse-stage loss**: Viewed product but didn't add to cart -> 50% of avg cart value (lower intent)
-- **Cart-stage loss**: Added to cart but didn't checkout -> 100% of avg cart value
-- **Checkout-stage loss**: Started checkout but didn't pay -> 120% of avg cart value (high intent premium)
+真实电商场景中，用户可能通过搜索引擎或社交媒体直接跳转到商品详情页，跳过首页。过滤这类"不符合预期顺序"的会话会丢失高意向流量。因此本分析不强制要求会话按固定顺序遍历所有页面。
 
-## 3. Statistical Tests
+---
 
-| Method | Purpose | Assumption |
-|--------|---------|------------|
-| Chi-square independence | Is channel/device associated with conversion? | Expected freq >= 5 |
-| Independent t-test | Continuous feature difference (lost vs converted) | Normality (robust with large N) |
-| Cohen's d | t-test effect size | Reference: 0.2 small / 0.5 medium / 0.8 large (Cohen, 1988) |
-| Kruskal-Wallis | Non-parametric multi-group comparison | Non-normal data |
+## 二、流失损失量化
 
-## 4. PIE Priority Framework
+采用电商 CRO 领域标准的"购物车放弃金额"（Cart Abandonment Value）方法，结合用户在各阶段展示的购买意向强度，赋予不同的价值权重：
 
-PIE (Potential x Importance x Ease) — standard CRO prioritization from WiderFunnel:
+| 流失环节 | 价值权重 | 理由 |
+|----------|----------|------|
+| 首页 → 商品页 | 0.5 倍 | 浏览首页尚未展示明确购买意向 |
+| 商品页 → 购物车 | 0.5 倍 | 浏览商品但未加购，意向较弱 |
+| 购物车 → 结账 | 1.0 倍 | 已加购，有明确购买意向 |
+| 结账 → 支付 | 1.2 倍 | 已进入支付流程，意向极强 |
 
-- **Potential (1-10)**: Revenue recoverable by fixing this bottleneck
-- **Importance (1-10)**: How many users are affected
-- **Ease (1-10)**: Implementation difficulty (tech/design/ops cost)
+> 默认假设平均客单价为 ¥100。该参数可在 `funnel_analysis.py` 的 `compute_loss_amount()` 中通过 `avg_cart_value` 参数调整。
 
-PIE Score = P x I x E, sorted descending for optimization priority.
+---
+
+## 三、统计检验方法
+
+| 方法 | 用途 | 前提假设 |
+|------|------|----------|
+| 卡方独立性检验 | 检验"渠道 / 设备 / 国家"与"是否转化"是否独立 | 期望频数 ≥ 5 |
+| 独立样本 t 检验 | 对比流失组与转化组在连续指标（停留时长、商品数等）上的均值差异 | 大样本下对正态性偏离稳健 |
+| Cohen's d 效应量 | 量化 t 检验中差异的实际大小 | 参考值：0.2=小, 0.5=中, 0.8=大（Cohen, 1988） |
+| 显著性标注 | p < 0.001 → \*\*\* / p < 0.01 → \*\* / p < 0.05 → \* / 不显著 → ns | |
+
+---
+
+## 四、PIE 优先级框架
+
+PIE（Potential × Importance × Ease）是 CRO 领域替代简单 ROI 计算的标准优先级框架，源自 WiderFunnel 的转化率优化方法论。
+
+### 计算公式
+
+```
+PIE 总分 = Potential × Importance × Ease（每个维度 1-10 分）
+
+Potential（挽回潜力）= 该环节损失金额 / 总损失金额 × 10（最低 1 分）
+Importance（影响面）= 入环会话数 / 最大入环会话数 × 10（最低 1 分）
+Ease（实施难度）= 11 - 实施难度评分（1-10，分数越高越容易实施）
+```
+
+### 实施难度参考
+
+| 环节 | 实施难度 | 理由 |
+|------|----------|------|
+| 首页 → 商品页 | 7（中高） | 首页改版涉及 UI/UX 设计，周期较长 |
+| 商品页 → 购物车 | 6（中） | 商品详情页优化，可 A/B 测试快速验证 |
+| 购物车 → 结账 | 5（中） | 购物车流程优化，需后端配合 |
+| 结账 → 支付 | 8（高） | 支付页改动相对独立，标准化程度高 |
+
+### 敏感性分析
+
+每个优化建议附带三档预估（保守 5% / 基准 10% / 乐观 15% 转化率提升），以估算修复后的潜在收入挽回范围。
+
+---
+
+## 五、与 RFM 项目的方法论差异
+
+| 维度 | RFM 项目 | 漏斗 CRO 项目 |
+|------|----------|---------------|
+| 分析视角 | 用户价值（谁值得运营） | 流程效率（哪里在漏钱） |
+| 核心指标 | R（最近购买天数）、F（购买频次）、M（消费金额） | 逐级转化率、损失金额、PIE 得分 |
+| 分群逻辑 | 按消费价值切分为 10 大运营组 | 按流失节点自然划分 |
+| 输出导向 | 客群×触达策略×ROI | 瓶颈×修复方案×PIE 优先级 |
+| 统计方法 | t 检验、ANOVA、Tukey HSD、功效分析 | 卡方检验、t 检验、Cohen's d |

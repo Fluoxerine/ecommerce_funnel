@@ -1,39 +1,34 @@
-# Project Background
+# 项目背景与问题定义
 
-## Business Scenario
+## 业务场景
 
-A mid-size e-commerce platform with the following data profile:
-- 5,000 user sessions
-- 1,872 unique users
-- 12,719 page-view records
-- 5 funnel stages: Home -> Product -> Cart -> Checkout -> Confirmation
-- 4 traffic channels: Direct, Email, Google, Social Media
-- 3 device types: Desktop, Mobile, Tablet
+某中型电商平台（模拟数据），日均有约 5,000 个用户会话，覆盖 1,872 名独立用户。网站包含从首页到支付确认的完整购买路径，通过四种渠道（搜索、邮件、直接访问、社交媒体）获取流量，用户在桌面端、移动端和平板端均有访问。
 
-### Problem 1: Low Conversion, Unknown Bottleneck
+### 问题一：转化率偏低，但不知道问题出在哪
 
-Overall conversion rate is 20.2% (1,010 / 5,000). The operations team doesn't know:
-- Which funnel stage causes the most drop-off
-- How conversion differs by traffic channel
-- Whether device experience varies significantly
+平台整体转化率为 20.2%（5,000 会话中 1,010 个最终购买），运营团队面临以下困惑：
+- 用户在哪个环节流失最多？是浏览商品后不加购，还是加购后不下单？
+- 不同渠道来的用户，转化路径有何不同？
+- 桌面端和移动端的体验是否存在差异？
 
-### Problem 2: No Data-Driven Prioritization
+### 问题二：优化资源分配缺乏数据依据
 
-Both tech and ops teams have competing improvement proposals (product page redesign, cart recovery emails, payment flow simplification), but no data to rank them — what to fix first, and how much revenue will it recover?
+技术团队和运营团队各自提出了多个优化方向（改进商品详情页、购物车召回邮件、简化支付流程），但没有数据来排定优先级——"先改哪个？改了能挽回多少钱？"
 
-## Project Goals
+## 项目目标
 
-1. **Quantify churn at each funnel stage**: How many sessions drop off, and what is the estimated revenue loss
-2. **Diagnose root causes**: Which dimensions (channel/device/country/time) have significantly higher churn rates
-3. **Prioritize fixes**: PIE (Potential x Importance x Ease) ranking, so the tech team knows what to fix first
-4. **Visual dashboard**: For management and operations monitoring
+1. **量化各环节流失**：用会话维度的漏斗数据，精准定位最高流失环节
+2. **量化损失金额**：估算每个流失环节造成的潜在收入损失
+3. **多维度诊断**：按渠道、设备、国家、时段拆解，找出差异最显著的维度
+4. **PIE 优先级排序**：基于 Potential（挽回潜力）× Importance（影响面）× Ease（实施难度）框架，输出可落地的优化优先级
+5. **可视化输出**：10 张分析图表 + Power BI 交互式仪表板（4 页）
 
-## Success Criteria
+## 成功标准
 
-| Dimension | Standard |
-|-----------|----------|
-| Funnel coverage | All 5 stages counted, no double-counting |
-| Churn location | Channel x device conversion rate differences identified |
-| Statistical validation | At least 2 significant differences found (chi2, t-test) |
-| Actionable output | At least 3 bottlenecks with specific fix recommendations and estimated recovery |
-| Visualization | At least 10 reusable charts |
+| 维度 | 标准 |
+|------|------|
+| 漏斗覆盖 | 5 个漏斗阶段独立会话计数，无重复无遗漏 |
+| 流失定位 | 精确到渠道×设备的转化率差异 |
+| 统计验证 | 卡方检验 + t 检验，明确标注显著性 |
+| 损失量化 | 每个瓶颈环节有估算损失金额和 PIE 得分 |
+| 落地可执行 | 至少 3 个优化方向，附预估挽回金额和具体动作 |

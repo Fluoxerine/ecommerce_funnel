@@ -1,67 +1,132 @@
-# CRO Optimization Strategy
+# 转化率优化（CRO）策略
 
-> Based on 5,000-session funnel analysis | PIE-prioritized
+> 基于 5,000 个会话的漏斗分析 | PIE 优先级排序 | 实际运行结果
 
-## Overall Strategy
+---
 
-Fix in this order (PIE-ranked): Browse->Cart > Cart->Checkout > Checkout->Confirm.
+## 总体策略
 
-## P0 — Fix Immediately
+按 PIE 得分排序：浏览→加购（250） > 首页→浏览（154） > 加购→下单（34） > 下单→支付（18）。
 
-### 1. Highest Churn: Browse -> Cart
+优先修复"浏览商品 → 加入购物车"环节，它贡献了 51.6% 的预估总损失（¥119,400 / ¥231,210）。
 
-**Problem**: 59.9% of browsers don't add to cart (2,388 / 3,987 lost)
-**Estimated Loss**: ~Y120,000 (at Y100 avg unit price)
+---
 
-**Actions**:
-- A/B test product detail: hero image quality, price visibility, review placement
-- Increase "Add to Cart" button visual prominence (color, size, position)
-- Personalize recommendations based on browsing history
-- Mobile product page load speed optimization (target < 2s)
+## P0 — 立即修复
 
-**Estimated Impact**: +5pp conversion -> 200 more sessions adding to cart -> ~Y10,000 incremental revenue
+### 1. 最高流失环节：浏览商品 → 加入购物车
 
-### 2. Cart Abandonment: Cart -> Checkout
+**问题**：59.89% 的浏览用户未加购（2,388 / 3,987 流失）
+**预估损失**：¥119,400（按平均客单价 ¥100 估算）
+**PIE 得分**：250（P=5.2, I=8.0, E=6.0）
 
-**Problem**: 29.8% of cart-adders don't checkout (476 / 1,599 lost)
-**Estimated Loss**: ~Y47,600
+**根因推断**（基于行为数据）：
+- 流失用户平均仅浏览 2.00 个页面，停留 197 秒 → **浅层浏览，未被商品吸引**
+- 转化用户平均浏览 4.33 个页面，停留 420 秒 → **深度参与后才做出购买决定**
 
-**Actions**:
-- Cart abandonment recovery email (1h after abandon, with exclusive discount code)
-- Show shipping cost and total before checkout (eliminate "shipping surprise")
-- Mobile cart page optimization: reduce scrolling, enlarge tap targets
+**建议动作**：
 
-**Estimated Impact**: Recover 15% of losses -> 71 sessions -> ~Y7,100 incremental revenue
+| 动作 | 预估成本 | 预期效果 |
+|------|:------:|------|
+| 商品详情页 A/B 测试：优化主图质量、价格展示位置、评价摘要 | 中 | 提升浏览深度和信息接收效率 |
+| 增加"加入购物车"按钮的视觉突出度（颜色、大小、悬浮跟随） | 低 | 降低操作门槛 |
+| 在商品页增加个性化推荐模块（"浏览此商品的用户还看了…"） | 中 | 延长浏览路径，增加加购机会 |
+| 移动端商品图加载速度优化（目标 < 2 秒） | 中 | 减少因加载慢导致的跳出 |
 
-## P1 — Fix This Week
+**预估效果**（三档敏感性）：
 
-### 3. Checkout Drop-off: Checkout -> Confirm
+| 情景 | 转化率提升 | 额外加购会话 | 预估挽回金额 |
+|------|:------:|:------:|:------:|
+| 保守（5% 提升） | 40.11% → 42.12% | 80 | ¥8,000 |
+| 基准（10% 提升） | 40.11% → 44.12% | 160 | ¥16,000 |
+| 乐观（15% 提升） | 40.11% → 46.13% | 240 | ¥24,000 |
 
-**Problem**: 10.1% of checkout starters don't pay (113 / 1,123 lost)
+---
 
-**Actions**:
-- Payment error message optimization
-- Add more payment methods
-- Auto-retry on payment failure + clear notification
+### 2. 购物车放弃：加入购物车 → 提交订单
 
-### 4. Social Media Channel Optimization
+**问题**：29.77% 的加购用户未下单（476 / 1,599 流失）
+**预估损失**：¥47,600
 
-**Problem**: Social Media has lowest conversion rate (19.23%)
-**Actions**:
-- Show best-selling items to social media visitors
-- First-visit discount popup (limited-time coupon)
+**建议动作**：
 
-## P2 — Quarterly Planning
+| 动作 | 预估成本 | 预期效果 |
+|------|:------:|------|
+| 购物车放弃召回邮件（加购后 1 小时发送，含专属 5% 优惠码） | 低 | 自动化召回 |
+| 购物车页面展示运费估算（消除"运费惊吓"） | 低 | 减少犹豫 |
+| 移动端购物车操作优化（减少滚动、增大点击区域、一键结算） | 低 | 降低操作摩擦 |
 
-### 5. A/B Testing Platform
-### 6. Personalized Path Recommendations
+**预估效果**：挽回 15% 放弃会话 → 71 个额外转化 → ¥7,100 增量收入
 
-## Monitoring
+---
 
-| Metric | Current | Target | Frequency |
-|--------|---------|--------|-----------|
-| Overall conversion | 20.2% | 22%+ | Weekly |
-| Browse->Cart rate | 40.11% | 45%+ | Weekly |
-| Cart->Checkout rate | 70.23% | 75%+ | Weekly |
-| Mobile conversion | 20.17% | 21%+ | Weekly |
-| Cart abandonment rate | 29.77% | 25% | Weekly |
+## P1 — 本周修复
+
+### 3. 首页引导：首页 → 浏览商品
+
+**问题**：20.26% 的首页访客未进一步浏览商品（1,013 / 5,000 流失）
+**预估损失**：¥50,650
+
+**建议动作**：
+- 首页推荐算法优化（基于用户画像的个性化商品卡片）
+- 导航栏与分类入口的视觉层次优化
+- 首页 Banner 点击率 A/B 测试
+
+---
+
+### 4. Social Media 渠道定向优化
+
+**问题**：Social Media 渠道在最高流失环节（浏览→加购）表现最差，流失率 48.99%，比 Google 高 3.13 个百分点
+
+**建议动作**：
+- 社交渠道落地页优先展示热销 / 高评分商品
+- 首单限时优惠弹窗（引导加购意愿）
+- 社交渠道流量接入专门的商品推荐策略
+
+---
+
+## P2 — 季度规划
+
+### 5. 支付页优化：提交订单 → 支付成功
+
+**问题**：10.06% 的提交订单用户未支付（113 / 1,123 流失）
+**预估损失**：¥13,560
+
+**说明**：支付环节转化率 89.94%，整体健康。113 个流失会话目前无需紧急投入，可作为持续优化项。
+
+**建议动作**：
+- 支付错误提示信息优化
+- 支付方式扩展（如先买后付、分期）
+- 支付失败后自动重试 + 客服入口
+
+---
+
+### 6. A/B 测试平台搭建
+
+在商品详情页和购物车页部署 A/B 测试框架，确保每次改动有对照组验证。
+
+---
+
+## 监控指标体系
+
+| 指标 | 当前值 | 季度目标 | 监控频率 |
+|------|:------:|:------:|:------:|
+| 整体转化率 | 20.20% | 22%+ | 周 |
+| 浏览→加购转化率 | 40.11% | 45%+ | 周 |
+| 加购→下单转化率 | 70.23% | 75%+ | 周 |
+| 下单→支付转化率 | 89.94% | 维持 | 周 |
+| 用户平均停留时长 | 248s | 280s+ | 周 |
+| 平均页面访问数 | 2.54 页 | 3.0 页+ | 周 |
+| 购物车放弃率（加购后） | 29.77% | 25% | 周 |
+
+---
+
+## 预算分配建议
+
+| 优先级 | 预算占比 | 预期收益贡献 |
+|:----:|:------:|:------:|
+| P0（浏览→加购 + 加购→下单） | 65% | ~70% |
+| P1（首页引导 + 社交渠道） | 25% | ~20% |
+| P2（支付 + A/B 平台） | 10% | ~10% |
+
+优先将资源集中在 P0 环节——用 65% 预算撬动 70% 的预期收益。
