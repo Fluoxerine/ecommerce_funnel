@@ -5,7 +5,7 @@ USE ecommerce;
 
 SET GLOBAL local_infile = ON;
 
-LOAD DATA INFILE '/var/lib/mysql/upload/customer_journey.csv'
+LOAD DATA INFILE 'D:/Git/var/lib/mysql/upload/customer_journey.csv'
 INTO TABLE user_behavior
 FIELDS TERMINATED BY ','
 LINES TERMINATED BY '\n'

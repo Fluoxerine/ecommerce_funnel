@@ -1,12 +1,13 @@
-"""MySQL 数据导入 + Power BI 数据导出"""
+"""MySQL data import + Power BI data export"""
 import csv
 import io
 import subprocess
 import sys
 from pathlib import Path
-from python.config import MYSQL_CONFIG, PROJECT_ROOT, OUTPUT_DIR, logger
+import pandas as pd
+from sqlalchemy import create_engine, text
+from python.config import MYSQL_CONFIG, PROJECT_ROOT, OUTPUT_DIR, DATA_DIR, logger
 
-DATA_DIR = PROJECT_ROOT / 'data'
 POWERBI_DIR = PROJECT_ROOT / 'powerbi' / 'data'
 SQL_DIR = PROJECT_ROOT / 'sql'
 
@@ -21,16 +22,7 @@ def _mysql_base_args() -> list:
         '-u', MYSQL_CONFIG['user'],
         f"-p{MYSQL_CONFIG['password']}",
         '--default-character-set=utf8mb4',
-        '--local-infile=1',
     ]
-
-
-def _run_docker_cp(local_path: str, container_path: str) -> bool:
-    result = subprocess.run(
-        ['docker', 'cp', str(local_path), f'{CONTAINER}:{container_path}'],
-        capture_output=True, text=True, encoding='utf-8', errors='replace',
-    )
-    return result.returncode == 0
 
 
 def _run_mysql(description: str, sql_file: Path = None, query: str = None):
@@ -53,26 +45,57 @@ def _run_mysql(description: str, sql_file: Path = None, query: str = None):
     return result
 
 
-def step1_copy_csv() -> bool:
-    print("\n[1/3] Copy CSV to container...")
-    files = [
-        (DATA_DIR / 'customer_journey.csv', '/var/lib/mysql/upload/customer_journey.csv'),
-    ]
-    for host_path, container_path in files:
-        if not host_path.exists():
-            print(f"  SKIP: {host_path.name} not found")
-            continue
-        if not _run_docker_cp(str(host_path), container_path):
-            print(f"  FAILED: {host_path.name}")
-            return False
-        print(f"  OK: {host_path.name}")
-    return True
+def _get_engine():
+    pw = MYSQL_CONFIG['password']
+    encoded_pw = pw.replace('@', '%40').replace(':', '%3A').replace('/', '%2F')
+    url = (f"mysql+pymysql://{MYSQL_CONFIG['user']}:{encoded_pw}"
+           f"@{MYSQL_CONFIG['host']}:{MYSQL_CONFIG['port']}/{DB}"
+           f"?charset=utf8mb4")
+    return create_engine(url)
 
 
-def step2_run_sql() -> bool:
-    print("\n[2/3] Execute SQL scripts...")
+def step1_create_tables() -> bool:
+    """Create database tables (skip LOAD DATA)"""
+    print("\n[1/5] Create tables...")
+    result = _run_mysql('01_setup_database', sql_file=SQL_DIR / '01_setup_database.sql')
+    return result.returncode == 0
+
+
+def step2_load_csv_via_pandas() -> bool:
+    """Load CSV directly into MySQL using pandas + sqlalchemy"""
+    print("\n[2/5] Load CSV data via pandas...")
+    csv_path = DATA_DIR / 'customer_journey.csv'
+    if not csv_path.exists():
+        print(f"  SKIP: {csv_path} not found")
+        return False
+
+    try:
+        df = pd.read_csv(csv_path)
+        # Rename Timestamp to EventTime for MySQL compatibility
+        df = df.rename(columns={'Timestamp': 'EventTime'})
+        df['EventTime'] = pd.to_datetime(df['EventTime'])
+
+        engine = _get_engine()
+        df.to_sql('user_behavior', engine, if_exists='replace', index=False,
+                  method='multi', chunksize=1000)
+
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT COUNT(*) FROM user_behavior"))
+            count = result.scalar()
+        print(f"  OK: {count:,} records loaded")
+
+        # Grant SELECT so subsequent temp table scripts work
+        engine.dispose()
+        return True
+    except Exception as e:
+        print(f"FAILED: {e}")
+        return False
+
+
+def step3_run_analysis_sql() -> bool:
+    """Execute analysis SQL scripts (skip load data)"""
+    print("\n[3/5] Execute analysis SQL scripts...")
     scripts = [
-        '01_setup_database.sql', '02_load_data.sql',
         '03_funnel_wide.sql', '04_funnel_overview.sql',
         '05_multi_dimension.sql', '06_churn_diagnostics.sql',
         '07_statistical_comparison.sql', '08_operational_export.sql',
@@ -88,8 +111,24 @@ def step2_run_sql() -> bool:
     return True
 
 
-def step3_export_powerbi() -> None:
-    print("\n[3/3] Export Power BI data...")
+def step4_verify_data() -> bool:
+    """Verify MySQL tables after import"""
+    print("\n[4/5] Verify data...")
+    queries = {
+        'user_behavior records': 'SELECT COUNT(*) FROM user_behavior',
+        'funnel_wide sessions': 'SELECT COUNT(*) FROM funnel_wide',
+        'funnel_wide steps': 'SELECT SUM(step1_home), SUM(step2_product), SUM(step3_cart), SUM(step4_checkout), SUM(step5_confirm) FROM funnel_wide',
+    }
+    for desc, query in queries.items():
+        result = _run_mysql(desc, query=query)
+        if result.returncode != 0:
+            return False
+    return True
+
+
+def step5_export_powerbi() -> None:
+    """Export Power BI CSV files from MySQL"""
+    print("\n[5/5] Export Power BI data...")
     POWERBI_DIR.mkdir(parents=True, exist_ok=True)
 
     queries = {
@@ -103,6 +142,10 @@ def step3_export_powerbi() -> None:
             "SELECT DeviceType, COUNT(*) AS sessions, SUM(is_purchased) AS converted, "
             "ROUND(SUM(is_purchased)*100.0/COUNT(*),2) AS conversion_rate FROM funnel_wide "
             "GROUP BY DeviceType",
+        'country_analysis.csv':
+            "SELECT Country, COUNT(*) AS sessions, SUM(is_purchased) AS converted, "
+            "ROUND(SUM(is_purchased)*100.0/COUNT(*),2) AS conversion_rate FROM funnel_wide "
+            "GROUP BY Country ORDER BY conversion_rate DESC",
         'funnel_wide_export.csv':
             "SELECT * FROM funnel_wide",
     }
@@ -114,7 +157,7 @@ def step3_export_powerbi() -> None:
         result = subprocess.run(args, capture_output=True, text=True,
                                 encoding='utf-8', errors='replace')
         if result.returncode != 0 or not result.stdout:
-            print(f"  {filename}: FAILED")
+            print(f"  {filename}: FAILED - {result.stderr.strip()}")
             continue
         reader = csv.reader(io.StringIO(result.stdout), delimiter='\t')
         with open(output_file, 'w', encoding='utf-8', newline='') as f:
@@ -146,13 +189,17 @@ def main() -> None:
         sys.exit(1)
     print(f"Container {CONTAINER} is running")
 
-    if not step1_copy_csv():
-        print("\n[ABORT] CSV copy failed")
+    if not step1_create_tables():
+        print("\n[ABORT] Table creation failed")
         sys.exit(1)
-    if not step2_run_sql():
-        print("\n[ABORT] SQL execution failed")
+    if not step2_load_csv_via_pandas():
+        print("\n[ABORT] CSV load failed")
         sys.exit(1)
-    step3_export_powerbi()
+    if not step3_run_analysis_sql():
+        print("\n[ABORT] SQL analysis failed")
+        sys.exit(1)
+    step4_verify_data()
+    step5_export_powerbi()
     print("\nDone!")
 
 

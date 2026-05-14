@@ -24,3 +24,4 @@ powerbi/data/*.csv
 # macOS / Windows
 .DS_Store
 Thumbs.db
+.claude/
