@@ -1,26 +1,407 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "channel_device_matrix",
   "position": {
-    "x": 50,
-    "y": 380,
+    "x": 0,
+    "y": 384,
     "z": 2,
-    "height": 270,
-    "width": 920,
+    "height": 272,
+    "width": 640,
     "tabOrder": 2
   },
   "visual": {
     "visualType": "pivotTable",
     "query": {
       "queryState": {
+        "Columns": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "DeviceType"
+                }
+              },
+              "queryRef": "funnel_wide_export.DeviceType",
+              "nativeQueryRef": "DeviceType",
+              "active": true
+            }
+          ]
+        },
         "Rows": {
-          "projections": []
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "ReferralSource"
+                }
+              },
+              "queryRef": "funnel_wide_export.ReferralSource",
+              "nativeQueryRef": "ReferralSource",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "ReferralSource"
+                }
+              },
+              "queryRef": "funnel_wide_export.ReferralSource",
+              "nativeQueryRef": "ReferralSource",
+              "active": true
+            }
+          ]
         },
         "Values": {
-          "projections": []
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_wide_export"
+                        }
+                      },
+                      "Property": "is_purchased"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(funnel_wide_export.is_purchased)",
+              "nativeQueryRef": "is_purchased 的总和"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "is_purchased"
+                }
+              },
+              "queryRef": "funnel_wide_export.is_purchased",
+              "nativeQueryRef": "is_purchased"
+            }
+          ]
         }
       }
     },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "17D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "15D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "rowHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "17D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "178.26086956521738D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "funnel_wide_export.ReferralSource"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "119.04347826086956D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "scopeId": {
+                  "Comparison": {
+                    "ComparisonKind": 0,
+                    "Left": {
+                      "Column": {
+                        "Expression": {
+                          "SourceRef": {
+                            "Entity": "funnel_wide_export"
+                          }
+                        },
+                        "Property": "DeviceType"
+                      }
+                    },
+                    "Right": {
+                      "Literal": {
+                        "Value": "'Desktop'"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "100.47826086956522D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "scopeId": {
+                  "Comparison": {
+                    "ComparisonKind": 0,
+                    "Left": {
+                      "Column": {
+                        "Expression": {
+                          "SourceRef": {
+                            "Entity": "funnel_wide_export"
+                          }
+                        },
+                        "Property": "DeviceType"
+                      }
+                    },
+                    "Right": {
+                      "Literal": {
+                        "Value": "'Mobile'"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "90.86956521739131D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "scopeId": {
+                  "Comparison": {
+                    "ComparisonKind": 0,
+                    "Left": {
+                      "Column": {
+                        "Expression": {
+                          "SourceRef": {
+                            "Entity": "funnel_wide_export"
+                          }
+                        },
+                        "Property": "DeviceType"
+                      }
+                    },
+                    "Right": {
+                      "Literal": {
+                        "Value": "'Tablet'"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "83.43478260869566D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "total": [
+                  {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_wide_export"
+                        }
+                      },
+                      "Property": "DeviceType"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'渠道 X 设备交叉'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "20D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "spacing": [
+        {
+          "properties": {
+            "customizeSpacing": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "spaceBelowTitle": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "ffbeeea0491601beca42",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "funnel_wide_export"
+              }
+            },
+            "Property": "ReferralSource"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "586c1e96a709ebc76619",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "funnel_wide_export"
+              }
+            },
+            "Property": "DeviceType"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "41cdd401bb1423bc6f12",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "funnel_wide_export"
+                  }
+                },
+                "Property": "is_purchased"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

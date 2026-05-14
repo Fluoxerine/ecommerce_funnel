@@ -1,6 +1,35 @@
 table funnel_overview
 	lineageTag: 17dbae76-ecf2-4648-8361-298dad117f3c
 
+	measure 转化率 = DIVIDE(SUM(funnel_overview[step5_confirm]), SUM(funnel_overview[step1_home]))
+		lineageTag: 9e646147-e10e-47b2-892b-22599ce4ad52
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 损失金额 = (SUM(funnel_overview[step1_home])-SUM(funnel_overview[step5_confirm])) * 100
+		formatString: 0
+		lineageTag: c2194ecd-3400-46ae-9839-ca0cae15da7a
+
+	measure 首页会话 = SUM(funnel_wide_export[step1_home])
+		formatString: 0
+		lineageTag: 2c2d17a6-92dd-48af-a8e4-f729749d037a
+
+	measure 商品页会话 = SUM(funnel_wide_export[step2_product])
+		formatString: 0
+		lineageTag: 5384d9c4-ffc8-4ab9-9674-22c778d0b587
+
+	measure 购物车会话 = SUM(funnel_wide_export[step3_cart])
+		formatString: 0
+		lineageTag: fb7fb3f0-8d1c-4be6-847e-fcb1c68f436a
+
+	measure 结账页会话 = SUM(funnel_wide_export[step4_checkout])
+		formatString: 0
+		lineageTag: c230f0d2-8ba4-4ae1-8611-4377ad469895
+
+	measure 确认页会话 = SUM(funnel_wide_export[step5_confirm])
+		formatString: 0
+		lineageTag: b373b6ca-a272-470b-96df-0a2a93a656fe
+
 	column step1_home
 		dataType: int64
 		formatString: 0

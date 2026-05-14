@@ -14,10 +14,41 @@
     "query": {
       "queryState": {
         "Category": {
-          "projections": []
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "ReferralSource"
+                }
+              },
+              "queryRef": "funnel_wide_export.ReferralSource",
+              "nativeQueryRef": "ReferralSource",
+              "active": true
+            }
+          ]
         },
         "Y": {
-          "projections": []
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "is_purchased"
+                }
+              },
+              "queryRef": "funnel_wide_export.is_purchased",
+              "nativeQueryRef": "is_purchased"
+            }
+          ]
         }
       }
     },

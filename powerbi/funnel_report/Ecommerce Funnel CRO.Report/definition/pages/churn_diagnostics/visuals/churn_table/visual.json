@@ -14,7 +14,120 @@
     "query": {
       "queryState": {
         "Values": {
-          "projections": []
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "SessionID"
+                }
+              },
+              "queryRef": "funnel_wide_export.SessionID",
+              "nativeQueryRef": "SessionID"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "ReferralSource"
+                }
+              },
+              "queryRef": "funnel_wide_export.ReferralSource",
+              "nativeQueryRef": "ReferralSource"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "DeviceType"
+                }
+              },
+              "queryRef": "funnel_wide_export.DeviceType",
+              "nativeQueryRef": "DeviceType"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "Country"
+                }
+              },
+              "queryRef": "funnel_wide_export.Country",
+              "nativeQueryRef": "Country"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "step2_product"
+                }
+              },
+              "queryRef": "funnel_wide_export.step2_product",
+              "nativeQueryRef": "step2_product"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "step3_cart"
+                }
+              },
+              "queryRef": "funnel_wide_export.step3_cart",
+              "nativeQueryRef": "step3_cart"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "step4_checkout"
+                }
+              },
+              "queryRef": "funnel_wide_export.step4_checkout",
+              "nativeQueryRef": "step4_checkout"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "is_purchased"
+                }
+              },
+              "queryRef": "funnel_wide_export.is_purchased",
+              "nativeQueryRef": "is_purchased"
+            }
+          ]
         }
       }
     },

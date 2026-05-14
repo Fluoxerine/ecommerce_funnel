@@ -1,12 +1,12 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "kpi_loss",
   "position": {
-    "x": 690,
-    "y": 50,
+    "x": 0,
+    "y": 480,
     "z": 2,
-    "height": 120,
-    "width": 280,
+    "height": 240,
+    "width": 336,
     "tabOrder": 2
   },
   "visual": {
@@ -14,10 +14,120 @@
     "query": {
       "queryState": {
         "Values": {
-          "projections": []
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_overview"
+                    }
+                  },
+                  "Property": "损失金额"
+                }
+              },
+              "queryRef": "funnel_overview.损失金额",
+              "nativeQueryRef": "损失金额",
+              "format": "\"¥\"#,0.###############;\"¥\"-#,0.###############;\"¥\"#,0.###############"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_overview"
+                    }
+                  },
+                  "Property": "损失金额"
+                }
+              },
+              "queryRef": "funnel_overview.损失金额",
+              "nativeQueryRef": "损失金额"
+            }
+          ]
         }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "funnel_overview"
+                  }
+                },
+                "Property": "损失金额"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
       }
     },
+    "objects": {
+      "labels": [
+        {
+          "properties": {
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'总损失金额'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "20D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "279455f0f9af6ef20bfe",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "funnel_overview"
+              }
+            },
+            "Property": "损失金额"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

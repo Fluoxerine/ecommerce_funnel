@@ -1,0 +1,28 @@
+table 漏斗步骤
+	lineageTag: 48238cab-2eb9-4b2e-9b80-ce97e3f5f1d3
+
+	column 页面步骤
+		lineageTag: 2752a1ba-ba43-43d6-a5d7-bd36a311d697
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [页面步骤]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 漏斗步骤 = calculated
+		mode: import
+		source =
+				
+				DATATABLE(
+				    "页面步骤", STRING,
+				    {
+				        {"首页"},
+				        {"商品页"},
+				        {"购物车"},
+				        {"结账页"},
+				        {"确认页"}
+				    }
+				)
+
+	annotation PBI_Id = e0dd4d2efd4c4369a01ea15cfe380f69
+

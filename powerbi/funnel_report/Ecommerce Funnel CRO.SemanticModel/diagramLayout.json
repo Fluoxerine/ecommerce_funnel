@@ -4,7 +4,7 @@
     {
       "ordinal": 0,
       "scrollPosition": {
-        "x": 0,
+        "x": 720,
         "y": 0
       },
       "nodes": [
@@ -69,6 +69,18 @@
           "nodeLineageTag": "bdaab0ad-6cbc-4aa9-a5a2-db38188c304a",
           "size": {
             "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1420,
+            "y": 50
+          },
+          "nodeIndex": "漏斗步骤",
+          "size": {
+            "height": 200,
             "width": 234
           },
           "zIndex": 0

@@ -14,10 +14,41 @@
     "query": {
       "queryState": {
         "Category": {
-          "projections": []
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "loss_data"
+                    }
+                  },
+                  "Property": "流失环节"
+                }
+              },
+              "queryRef": "loss_data.流失环节",
+              "nativeQueryRef": "流失环节",
+              "active": true
+            }
+          ]
         },
         "Y": {
-          "projections": []
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "loss_data"
+                    }
+                  },
+                  "Property": "PIE得分"
+                }
+              },
+              "queryRef": "loss_data.PIE得分",
+              "nativeQueryRef": "PIE得分"
+            }
+          ]
         }
       }
     },

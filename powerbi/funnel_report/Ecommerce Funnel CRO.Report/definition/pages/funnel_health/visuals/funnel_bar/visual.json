@@ -1,26 +1,442 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "funnel_bar",
   "position": {
-    "x": 50,
-    "y": 200,
+    "x": 336,
+    "y": 0,
     "z": 3,
-    "height": 450,
-    "width": 920,
+    "height": 720,
+    "width": 944,
     "tabOrder": 3
   },
   "visual": {
-    "visualType": "barChart",
+    "visualType": "funnel",
     "query": {
       "queryState": {
-        "Category": {
-          "projections": []
-        },
         "Y": {
-          "projections": []
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_overview"
+                        }
+                      },
+                      "Property": "step1_home"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(funnel_overview.step1_home)",
+              "nativeQueryRef": "step1_home",
+              "displayName": "step1_home"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_overview"
+                        }
+                      },
+                      "Property": "step2_product"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(funnel_overview.step2_product)",
+              "nativeQueryRef": "step2_product",
+              "displayName": "step2_product"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_overview"
+                        }
+                      },
+                      "Property": "step3_cart"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(funnel_overview.step3_cart)",
+              "nativeQueryRef": "step3_cart",
+              "displayName": "step3_cart"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_overview"
+                        }
+                      },
+                      "Property": "step4_checkout"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(funnel_overview.step4_checkout)",
+              "nativeQueryRef": "step4_checkout",
+              "displayName": "step4_checkout"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_overview"
+                        }
+                      },
+                      "Property": "step5_confirm"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(funnel_overview.step5_confirm)",
+              "nativeQueryRef": "step5_confirm",
+              "displayName": "step5_confirm"
+            }
+          ]
+        },
+        "category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "漏斗步骤"
+                    }
+                  },
+                  "Property": "页面步骤"
+                }
+              },
+              "queryRef": "漏斗步骤.页面步骤",
+              "nativeQueryRef": "页面步骤",
+              "active": true
+            }
+          ]
+        },
+        "value": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_overview"
+                    }
+                  },
+                  "Property": "首页会话"
+                }
+              },
+              "queryRef": "funnel_overview.首页会话",
+              "nativeQueryRef": "首页会话",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_overview"
+                    }
+                  },
+                  "Property": "商品页会话"
+                }
+              },
+              "queryRef": "funnel_overview.商品页会话",
+              "nativeQueryRef": "商品页会话",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_overview"
+                    }
+                  },
+                  "Property": "购物车会话"
+                }
+              },
+              "queryRef": "funnel_overview.购物车会话",
+              "nativeQueryRef": "购物车会话",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_overview"
+                    }
+                  },
+                  "Property": "结账页会话"
+                }
+              },
+              "queryRef": "funnel_overview.结账页会话",
+              "nativeQueryRef": "结账页会话",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_overview"
+                    }
+                  },
+                  "Property": "确认页会话"
+                }
+              },
+              "queryRef": "funnel_overview.确认页会话",
+              "nativeQueryRef": "确认页会话",
+              "active": true
+            }
+          ]
         }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Aggregation": {
+                "Expression": {
+                  "Column": {
+                    "Expression": {
+                      "SourceRef": {
+                        "Entity": "funnel_overview"
+                      }
+                    },
+                    "Property": "step1_home"
+                  }
+                },
+                "Function": 0
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
       }
     },
+    "objects": {
+      "dataPoint": [
+        {
+          "properties": {
+            "showAllDataPoints": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "labels": [
+        {
+          "properties": {
+            "funnelLabelStyle": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Data, percent of first'"
+                }
+              }
+            },
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            },
+            "enableBackground": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "14D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "categoryAxis": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "17D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "percentBarLabel": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "15D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'漏斗各阶段会话数'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "20D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "c38eacfbbb43d67e2f83",
+        "displayName": "step1_home",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "funnel_overview"
+                  }
+                },
+                "Property": "step1_home"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "910419a121168b1a6479",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "funnel_overview"
+                  }
+                },
+                "Property": "step2_product"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "601ac83dff32d5a2717f",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "funnel_overview"
+                  }
+                },
+                "Property": "step3_cart"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "a4f49b7aa9fbd9a26add",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "funnel_overview"
+                  }
+                },
+                "Property": "step4_checkout"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "03ed45e7aebaf760c50e",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "funnel_overview"
+                  }
+                },
+                "Property": "step5_confirm"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }
