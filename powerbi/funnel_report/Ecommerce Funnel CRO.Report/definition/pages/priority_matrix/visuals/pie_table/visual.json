@@ -1,0 +1,23 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "pie_table",
+  "position": {
+    "x": 50,
+    "y": 50,
+    "z": 0,
+    "height": 550,
+    "width": 550,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": []
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

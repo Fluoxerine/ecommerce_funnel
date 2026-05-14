@@ -1,3 +1,20 @@
 model Model
-  culture: en-US
-  defaultPowerBIDataSourceVersion: powerBI_V3
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: zh-CN
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation PBI_QueryOrder = ["channel_analysis","country_analysis","device_analysis","funnel_overview","funnel_wide_export"]
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table channel_analysis
+ref table country_analysis
+ref table device_analysis
+ref table funnel_overview
+ref table funnel_wide_export
+

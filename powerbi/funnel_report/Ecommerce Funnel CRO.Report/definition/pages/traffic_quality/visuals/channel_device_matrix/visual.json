@@ -1,0 +1,26 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "channel_device_matrix",
+  "position": {
+    "x": 50,
+    "y": 380,
+    "z": 2,
+    "height": 270,
+    "width": 920,
+    "tabOrder": 2
+  },
+  "visual": {
+    "visualType": "pivotTable",
+    "query": {
+      "queryState": {
+        "Rows": {
+          "projections": []
+        },
+        "Values": {
+          "projections": []
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

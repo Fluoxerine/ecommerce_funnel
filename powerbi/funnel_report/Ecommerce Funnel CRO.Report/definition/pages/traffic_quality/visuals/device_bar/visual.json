@@ -1,0 +1,26 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "device_bar",
+  "position": {
+    "x": 530,
+    "y": 50,
+    "z": 1,
+    "height": 300,
+    "width": 440,
+    "tabOrder": 1
+  },
+  "visual": {
+    "visualType": "barChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": []
+        },
+        "Y": {
+          "projections": []
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

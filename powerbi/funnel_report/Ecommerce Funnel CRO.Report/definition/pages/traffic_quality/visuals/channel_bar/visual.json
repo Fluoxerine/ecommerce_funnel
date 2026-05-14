@@ -1,0 +1,26 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "channel_bar",
+  "position": {
+    "x": 50,
+    "y": 50,
+    "z": 0,
+    "height": 300,
+    "width": 440,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "barChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": []
+        },
+        "Y": {
+          "projections": []
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

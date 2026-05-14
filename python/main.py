@@ -20,10 +20,10 @@ from python.churn_diagnostics import (
     compute_churn_features, compute_churn_by_dimension,
 )
 from python.visualization import (
-    plot_funnel_static, plot_funnel_plotly, plot_loss_waterfall,
-    plot_channel_device_heatmap, plot_time_analysis,
-    plot_stage_duration_boxplot, plot_entry_path,
-    plot_cart_channel_bubble, plot_path_sankey, plot_pie_matrix,
+    plot_funnel_plotly, plot_funnel_static, plot_loss_waterfall,
+    plot_channel_device_heatmap, plot_dimension_comparison,
+    plot_time_analysis, plot_duration_conversion,
+    plot_churn_by_channel, plot_path_sankey, plot_pie_matrix,
 )
 
 
@@ -87,17 +87,17 @@ def main() -> None:
 
     # [16] Visualization
     logger.info("=" * 60)
-    logger.info("16. Generating Visualizations (10 charts)")
+    logger.info("16. 生成可视化图表 (10 张)")
     logger.info("=" * 60)
 
-    plot_funnel_static(funnel_df)
     plot_funnel_plotly(funnel_df)
+    plot_funnel_static(funnel_df)
     plot_loss_waterfall(loss_df)
     plot_channel_device_heatmap(cross_df)
+    plot_dimension_comparison(channel_df, device_df)
     plot_time_analysis(hourly, dow)
-    plot_stage_duration_boxplot(df_cleaned)
-    plot_entry_path(entry_df)
-    plot_cart_channel_bubble(df_cleaned, funnel_wide)
+    plot_duration_conversion(duration_df)
+    plot_churn_by_channel(churn_by_dim)
     plot_path_sankey(df_cleaned)
     plot_pie_matrix(pie_df)
 

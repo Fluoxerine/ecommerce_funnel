@@ -1,0 +1,12 @@
+relationship AutoDetected_32afd85e-6612-4b57-b34d-79c8eea1fea8
+	fromColumn: funnel_wide_export.ReferralSource
+	toColumn: channel_analysis.ReferralSource
+
+relationship AutoDetected_44d303c6-0a13-439e-844c-19ebd4180061
+	fromColumn: funnel_wide_export.Country
+	toColumn: country_analysis.Country
+
+relationship AutoDetected_758038f3-86fa-4c70-8126-32aec663d544
+	fromColumn: funnel_wide_export.DeviceType
+	toColumn: device_analysis.DeviceType
+

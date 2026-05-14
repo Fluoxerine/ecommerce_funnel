@@ -25,3 +25,5 @@ powerbi/data/*.csv
 .DS_Store
 Thumbs.db
 .claude/
+.pbi/
+diagramLayout.json

@@ -1,0 +1,69 @@
+table funnel_overview
+	lineageTag: 17dbae76-ecf2-4648-8361-298dad117f3c
+
+	column step1_home
+		dataType: int64
+		formatString: 0
+		lineageTag: 3d82fade-63de-4e66-8693-bd8984604a16
+		summarizeBy: sum
+		sourceColumn: step1_home
+
+		annotation SummarizationSetBy = Automatic
+
+	column step2_product
+		dataType: int64
+		formatString: 0
+		lineageTag: 84ead2b4-17ec-4eac-8e9b-38bb5dc9fc6a
+		summarizeBy: sum
+		sourceColumn: step2_product
+
+		annotation SummarizationSetBy = Automatic
+
+	column step3_cart
+		dataType: int64
+		formatString: 0
+		lineageTag: 91ab07bd-d8ff-42b3-8ec1-e21188e9c35c
+		summarizeBy: sum
+		sourceColumn: step3_cart
+
+		annotation SummarizationSetBy = Automatic
+
+	column step4_checkout
+		dataType: int64
+		formatString: 0
+		lineageTag: 228510d7-2f8a-46e5-8361-dfec574af784
+		summarizeBy: sum
+		sourceColumn: step4_checkout
+
+		annotation SummarizationSetBy = Automatic
+
+	column step5_confirm
+		dataType: int64
+		formatString: 0
+		lineageTag: af0bc7a7-7aa7-4ad2-89ae-ee7d6aadb0dc
+		summarizeBy: sum
+		sourceColumn: step5_confirm
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_purchased
+		dataType: int64
+		formatString: 0
+		lineageTag: 2703b2c1-d3ef-4891-96fd-1a831290543c
+		summarizeBy: sum
+		sourceColumn: is_purchased
+
+		annotation SummarizationSetBy = Automatic
+
+	partition funnel_overview = m
+		mode: import
+		source =
+				let
+				    源 = Csv.Document(File.Contents("D:\D30360\Documents\ecommerce_funnel_analysis\powerbi\data\funnel_overview.csv"),[Delimiter=",", Columns=6, Encoding=936, QuoteStyle=QuoteStyle.None]),
+				    提升的标题 = Table.PromoteHeaders(源, [PromoteAllScalars=true]),
+				    更改的类型 = Table.TransformColumnTypes(提升的标题,{{"step1_home", Int64.Type}, {"step2_product", Int64.Type}, {"step3_cart", Int64.Type}, {"step4_checkout", Int64.Type}, {"step5_confirm", Int64.Type}, {"is_purchased", Int64.Type}})
+				in
+				    更改的类型
+
+	annotation PBI_ResultType = Table
+

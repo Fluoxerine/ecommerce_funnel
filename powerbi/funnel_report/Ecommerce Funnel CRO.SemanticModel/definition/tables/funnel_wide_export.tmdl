@@ -1,0 +1,109 @@
+table funnel_wide_export
+	lineageTag: bdaab0ad-6cbc-4aa9-a5a2-db38188c304a
+
+	column SessionID
+		dataType: string
+		lineageTag: 323472ed-8e56-42c6-a537-d39df81a4514
+		summarizeBy: none
+		sourceColumn: SessionID
+
+		annotation SummarizationSetBy = Automatic
+
+	column UserID
+		dataType: string
+		lineageTag: b17e524a-0d62-4f6f-a065-018d46a8eb9f
+		summarizeBy: none
+		sourceColumn: UserID
+
+		annotation SummarizationSetBy = Automatic
+
+	column DeviceType
+		dataType: string
+		lineageTag: 34603607-3166-447e-bad8-be1d2a378c93
+		summarizeBy: none
+		sourceColumn: DeviceType
+
+		annotation SummarizationSetBy = Automatic
+
+	column Country
+		dataType: string
+		lineageTag: 7890a422-bd9b-4c53-be8f-8f9417025bf8
+		summarizeBy: none
+		sourceColumn: Country
+
+		annotation SummarizationSetBy = Automatic
+
+	column ReferralSource
+		dataType: string
+		lineageTag: 18f2b120-a605-4dd9-b4e9-3719bbd2211b
+		summarizeBy: none
+		sourceColumn: ReferralSource
+
+		annotation SummarizationSetBy = Automatic
+
+	column step1_home
+		dataType: int64
+		formatString: 0
+		lineageTag: 8267bb3b-af1d-4101-ab80-a06fc7958f92
+		summarizeBy: sum
+		sourceColumn: step1_home
+
+		annotation SummarizationSetBy = Automatic
+
+	column step2_product
+		dataType: int64
+		formatString: 0
+		lineageTag: f08fe226-10f9-49bb-bb3e-1d9cf3dc23f9
+		summarizeBy: sum
+		sourceColumn: step2_product
+
+		annotation SummarizationSetBy = Automatic
+
+	column step3_cart
+		dataType: int64
+		formatString: 0
+		lineageTag: 71931c57-e787-4953-9b14-da7d29ccd8cb
+		summarizeBy: sum
+		sourceColumn: step3_cart
+
+		annotation SummarizationSetBy = Automatic
+
+	column step4_checkout
+		dataType: int64
+		formatString: 0
+		lineageTag: e3e5cbc7-423a-41cd-a3ba-ada909ecf11f
+		summarizeBy: sum
+		sourceColumn: step4_checkout
+
+		annotation SummarizationSetBy = Automatic
+
+	column step5_confirm
+		dataType: int64
+		formatString: 0
+		lineageTag: ec009bf8-8c62-4daa-960f-7ae2bc20b561
+		summarizeBy: sum
+		sourceColumn: step5_confirm
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_purchased
+		dataType: int64
+		formatString: 0
+		lineageTag: 266f69af-d72b-41d6-886b-951e66df5c63
+		summarizeBy: sum
+		sourceColumn: is_purchased
+
+		annotation SummarizationSetBy = Automatic
+
+	partition funnel_wide_export = m
+		mode: import
+		source =
+				let
+				    源 = Csv.Document(File.Contents("D:\D30360\Documents\ecommerce_funnel_analysis\powerbi\data\funnel_wide_export.csv"),[Delimiter=",", Columns=11, Encoding=936, QuoteStyle=QuoteStyle.None]),
+				    提升的标题 = Table.PromoteHeaders(源, [PromoteAllScalars=true]),
+				    更改的类型 = Table.TransformColumnTypes(提升的标题,{{"SessionID", type text}, {"UserID", type text}, {"DeviceType", type text}, {"Country", type text}, {"ReferralSource", type text}, {"step1_home", Int64.Type}, {"step2_product", Int64.Type}, {"step3_cart", Int64.Type}, {"step4_checkout", Int64.Type}, {"step5_confirm", Int64.Type}, {"is_purchased", Int64.Type}})
+				in
+				    更改的类型
+
+	annotation PBI_ResultType = Table
+
