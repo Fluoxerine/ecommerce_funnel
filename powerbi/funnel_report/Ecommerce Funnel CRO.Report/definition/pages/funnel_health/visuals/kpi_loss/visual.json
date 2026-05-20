@@ -28,7 +28,7 @@
               },
               "queryRef": "funnel_overview.损失金额",
               "nativeQueryRef": "损失金额",
-              "format": "\"¥\"#,##0"
+              "format": "\"¥\"#,0.###############;\"¥\"-#,0.###############;\"¥\"#,0.###############"
             }
           ]
         }
@@ -38,22 +38,49 @@
       "title": [
         {
           "properties": {
-            "show": { "expr": { "Literal": { "Value": "true" } } },
-            "text": { "expr": { "Literal": { "Value": "'流失损失'" } } },
-            "fontSize": { "expr": { "Literal": { "Value": "14D" } } }
-          }
-        }
-      ],
-      "labels": [
-        {
-          "properties": {
-            "show": { "expr": { "Literal": { "Value": "true" } } },
-            "fontSize": { "expr": { "Literal": { "Value": "36D" } } },
-            "color": { "expr": { "Literal": { "Value": "'#E74C3C'" } } }
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'流失损失'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "20D"
+                }
+              }
+            }
           }
         }
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "a9ec56ef2678594d39ed",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "funnel_overview"
+              }
+            },
+            "Property": "损失金额"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

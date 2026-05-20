@@ -38,22 +38,49 @@
       "title": [
         {
           "properties": {
-            "show": { "expr": { "Literal": { "Value": "true" } } },
-            "text": { "expr": { "Literal": { "Value": "'总转化率'" } } },
-            "fontSize": { "expr": { "Literal": { "Value": "14D" } } }
-          }
-        }
-      ],
-      "labels": [
-        {
-          "properties": {
-            "show": { "expr": { "Literal": { "Value": "true" } } },
-            "fontSize": { "expr": { "Literal": { "Value": "36D" } } },
-            "color": { "expr": { "Literal": { "Value": "'#27AE60'" } } }
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'总转化率'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "20D"
+                }
+              }
+            }
           }
         }
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "8a70355db5877544f1b6",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "funnel_overview"
+              }
+            },
+            "Property": "转化率"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

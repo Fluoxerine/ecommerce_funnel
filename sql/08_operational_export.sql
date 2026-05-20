@@ -1,33 +1,56 @@
--- 08: Operational Export — PIE Priority + Actionable List
+-- 08: 运营导出 — Power BI 数据源 + 监控指标
 
 USE ecommerce;
 
--- PIE priority assessment (based on actual funnel data)
-SELECT '=== PIE Priority ===' AS section;
-SELECT 'Browse->Cart' AS bottleneck, 2388 AS lost_sessions, 'High' AS ease,
-    'Optimize product detail page (images/price/descriptions); Add personalized recommendations'
-    AS action, 'P0-Immediate' AS priority
-UNION ALL
-SELECT 'Cart->Checkout', 476, 'Medium',
-    'Shopping cart recovery email (1h after abandon); Display shipping cost early',
-    'P0-Immediate'
-UNION ALL
-SELECT 'Checkout->Confirm', 113, 'High',
-    'Simplify payment flow; Mobile checkout optimization; Payment failure retry',
-    'P1-This Week';
+-- ── 8.1 漏斗宽表导出 ─────────────────────────────────
+SELECT '=== Funnel Wide Export ===' AS section;
 
--- High-value lost users (added to cart but did not checkout, sorted by cart items)
-SELECT '=== Top 20 High-Value Lost Users (Cart Abandoners) ===' AS section;
-SELECT f.SessionID, f.UserID, f.DeviceType, f.Country, f.ReferralSource,
-    d_max.ItemsInCart AS max_cart_items
-FROM funnel_wide f
-JOIN (
-    SELECT SessionID, MAX(ItemsInCart) AS ItemsInCart
-    FROM user_behavior WHERE PageType = 'cart'
-    GROUP BY SessionID
-) d_max ON f.SessionID = d_max.SessionID
-WHERE f.step3_cart = 1 AND f.step4_checkout = 0
-ORDER BY d_max.ItemsInCart DESC
-LIMIT 20;
+WITH session_funnel AS (
+    SELECT
+        ue.session_id,
+        MAX(ue.customer_id) AS customer_id,
+        MAX(ue.traffic_source) AS traffic_source,
+        MAX(ue.device_type) AS device_type,
+        MAX(ue.experiment_group) AS experiment_group,
+        MAX(ue.campaign_id) AS campaign_id,
+        MAX(CASE WHEN ue.page_category = 'Home' THEN 1 ELSE 0 END) AS step1_home,
+        MAX(CASE WHEN ue.page_category = 'PLP'  THEN 1 ELSE 0 END) AS step2_plp,
+        MAX(CASE WHEN ue.page_category = 'PDP'  THEN 1 ELSE 0 END) AS step3_pdp,
+        MAX(CASE WHEN ue.page_category = 'Cart' THEN 1 ELSE 0 END) AS step4_cart,
+        MAX(CASE WHEN ue.page_category = 'Checkout' THEN 1 ELSE 0 END) AS step5_checkout,
+        MAX(CASE WHEN ue.event_type = 'purchase' THEN 1 ELSE 0 END) AS is_purchased
+    FROM user_events ue
+    GROUP BY ue.session_id
+)
+SELECT
+    sf.*,
+    c.country,
+    c.loyalty_tier,
+    c.acquisition_channel,
+    c.age
+FROM session_funnel sf
+JOIN customers c ON sf.customer_id = c.customer_id
+LIMIT 1000;
 
-SELECT '08_operational_export: Complete' AS status;
+-- ── 8.2 监控 KPI ──────────────────────────────────
+SELECT '=== Monitoring KPIs ===' AS section;
+
+SELECT
+    'Overall Conversion Rate' AS metric,
+    ROUND(COUNT(DISTINCT CASE WHEN event_type = 'purchase' THEN session_id END)
+        / COUNT(DISTINCT session_id) * 100, 2) AS value
+FROM user_events
+UNION ALL
+SELECT
+    'PDP→Cart Rate',
+    ROUND(COUNT(DISTINCT CASE WHEN event_type = 'add_to_cart' THEN session_id END)
+        / COUNT(DISTINCT CASE WHEN page_category = 'PDP' THEN session_id END) * 100, 2)
+FROM user_events
+-- 注: Bounce Rate 已从监控 KPI 中移除 —
+-- 数据集中 bounce 事件在各页面/渠道分布过于均匀,
+-- bounce 用户与非 bounce 用户转化率仅差 1pp,
+-- 判断为随机标记而非真实行为信号 (详见 docs/06-funnel-critique-and-refinement.md)
+SELECT
+    'Refund Rate',
+    ROUND(SUM(refund_flag) / COUNT(*) * 100, 2)
+FROM transactions;

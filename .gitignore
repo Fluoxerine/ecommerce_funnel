@@ -17,6 +17,17 @@ output/charts/*.html
 # Power BI
 powerbi/data/*.csv
 
+# Raw data (large files)
+data/*.csv
+!data/.gitkeep
+E-Commerce Transactions + Clickstream/
+
+# Planning files
+task_plan.md
+findings.md
+progress.md
+baseline_snapshot.json
+
 # IDE
 .vscode/
 .idea/

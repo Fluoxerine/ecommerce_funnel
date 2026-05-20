@@ -1,18 +1,36 @@
-"""MySQL data import + Power BI data export"""
+"""MySQL 导入导出 — 数据入 MySQL 库并导出 Power BI 数据源"""
 import csv
 import io
 import subprocess
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import pandas as pd
 from sqlalchemy import create_engine, text
-from python.config import MYSQL_CONFIG, PROJECT_ROOT, OUTPUT_DIR, DATA_DIR, logger
+
+from python.config import (
+    MYSQL_CONFIG, PROJECT_ROOT, OUTPUT_DIR, DATA_DIR, logger,
+    EVENTS_CSV, TRANSACTIONS_CSV, CUSTOMERS_CSV, PRODUCTS_CSV, CAMPAIGNS_CSV,
+)
 
 POWERBI_DIR = PROJECT_ROOT / 'powerbi' / 'data'
 SQL_DIR = PROJECT_ROOT / 'sql'
-
 CONTAINER = MYSQL_CONFIG['container']
 DB = MYSQL_CONFIG['database']
+
+# 五表映射
+TABLE_FILES = {
+    'user_events': (EVENTS_CSV, ['event_id', 'timestamp', 'customer_id', 'session_id',
+                                  'event_type', 'product_id', 'device_type', 'traffic_source',
+                                  'campaign_id', 'page_category', 'session_duration_sec',
+                                  'experiment_group']),
+    'transactions': (TRANSACTIONS_CSV, None),
+    'customers': (CUSTOMERS_CSV, None),
+    'products': (PRODUCTS_CSV, None),
+    'campaigns': (CAMPAIGNS_CSV, None),
+}
 
 
 def _mysql_base_args() -> list:
@@ -49,42 +67,34 @@ def _get_engine():
     pw = MYSQL_CONFIG['password']
     encoded_pw = pw.replace('@', '%40').replace(':', '%3A').replace('/', '%2F')
     url = (f"mysql+pymysql://{MYSQL_CONFIG['user']}:{encoded_pw}"
-           f"@{MYSQL_CONFIG['host']}:{MYSQL_CONFIG['port']}/{DB}"
-           f"?charset=utf8mb4")
+           f"@{MYSQL_CONFIG['host']}:{MYSQL_CONFIG['port']}/{DB}?charset=utf8mb4")
     return create_engine(url)
 
 
 def step1_create_tables() -> bool:
-    """Create database tables (skip LOAD DATA)"""
     print("\n[1/5] Create tables...")
     result = _run_mysql('01_setup_database', sql_file=SQL_DIR / '01_setup_database.sql')
     return result.returncode == 0
 
 
-def step2_load_csv_via_pandas() -> bool:
-    """Load CSV directly into MySQL using pandas + sqlalchemy"""
-    print("\n[2/5] Load CSV data via pandas...")
-    csv_path = DATA_DIR / 'customer_journey.csv'
-    if not csv_path.exists():
-        print(f"  SKIP: {csv_path} not found")
-        return False
-
+def step2_load_tables() -> bool:
+    print("\n[2/5] Load tables via pandas...")
+    engine = _get_engine()
     try:
-        df = pd.read_csv(csv_path)
-        # Rename Timestamp to EventTime for MySQL compatibility
-        df = df.rename(columns={'Timestamp': 'EventTime'})
-        df['EventTime'] = pd.to_datetime(df['EventTime'])
-
-        engine = _get_engine()
-        df.to_sql('user_behavior', engine, if_exists='replace', index=False,
-                  method='multi', chunksize=1000)
-
-        with engine.connect() as conn:
-            result = conn.execute(text("SELECT COUNT(*) FROM user_behavior"))
-            count = result.scalar()
-        print(f"  OK: {count:,} records loaded")
-
-        # Grant SELECT so subsequent temp table scripts work
+        for table_name, (csv_path, _) in TABLE_FILES.items():
+            if not csv_path.exists():
+                print(f"  SKIP: {csv_path} not found")
+                continue
+            print(f"  Loading {table_name}...", end=' ')
+            df = pd.read_csv(csv_path, parse_dates=True)
+            # Normalize traffic_source for events
+            if table_name == 'user_events' and 'traffic_source' in df.columns:
+                df['traffic_source'] = df['traffic_source'].str.title()
+            df.to_sql(table_name, engine, if_exists='replace', index=False,
+                      method='multi', chunksize=5000)
+            with engine.connect() as conn:
+                count = conn.execute(text(f"SELECT COUNT(*) FROM {table_name}")).scalar()
+            print(f"{count:,} records loaded")
         engine.dispose()
         return True
     except Exception as e:
@@ -92,13 +102,12 @@ def step2_load_csv_via_pandas() -> bool:
         return False
 
 
-def step3_run_analysis_sql() -> bool:
-    """Execute analysis SQL scripts (skip load data)"""
+def step3_run_analysis() -> bool:
     print("\n[3/5] Execute analysis SQL scripts...")
     scripts = [
-        '03_funnel_wide.sql', '04_funnel_overview.sql',
-        '05_multi_dimension.sql', '06_churn_diagnostics.sql',
-        '07_statistical_comparison.sql', '08_operational_export.sql',
+        '03_funnel_overview.sql', '04_multi_dimension.sql',
+        '05_churn_diagnostics.sql', '06_statistical_tests.sql',
+        '07_loss_quantification.sql', '08_operational_export.sql',
     ]
     for script in scripts:
         sql_file = SQL_DIR / script
@@ -111,62 +120,65 @@ def step3_run_analysis_sql() -> bool:
     return True
 
 
-def step4_verify_data() -> bool:
-    """Verify MySQL tables after import"""
+def step4_verify() -> bool:
     print("\n[4/5] Verify data...")
-    queries = {
-        'user_behavior records': 'SELECT COUNT(*) FROM user_behavior',
-        'funnel_wide sessions': 'SELECT COUNT(*) FROM funnel_wide',
-        'funnel_wide steps': 'SELECT SUM(step1_home), SUM(step2_product), SUM(step3_cart), SUM(step4_checkout), SUM(step5_confirm) FROM funnel_wide',
-    }
-    for desc, query in queries.items():
-        result = _run_mysql(desc, query=query)
+    for table in TABLE_FILES:
+        result = _run_mysql(f"COUNT {table}", query=f"SELECT COUNT(*) FROM {table}")
         if result.returncode != 0:
             return False
     return True
 
 
 def step5_export_powerbi() -> None:
-    """Export Power BI CSV files from MySQL"""
-    print("\n[5/5] Export Power BI data...")
+    print("\n[5/5] Export Power BI data files from funnel_wide.csv...")
     POWERBI_DIR.mkdir(parents=True, exist_ok=True)
 
-    queries = {
-        'funnel_overview.csv':
-            "SELECT step1_home, step2_product, step3_cart, step4_checkout, step5_confirm, is_purchased FROM funnel_wide",
-        'channel_analysis.csv':
-            "SELECT ReferralSource, COUNT(*) AS sessions, SUM(is_purchased) AS converted, "
-            "ROUND(SUM(is_purchased)*100.0/COUNT(*),2) AS conversion_rate FROM funnel_wide "
-            "GROUP BY ReferralSource",
-        'device_analysis.csv':
-            "SELECT DeviceType, COUNT(*) AS sessions, SUM(is_purchased) AS converted, "
-            "ROUND(SUM(is_purchased)*100.0/COUNT(*),2) AS conversion_rate FROM funnel_wide "
-            "GROUP BY DeviceType",
-        'country_analysis.csv':
-            "SELECT Country, COUNT(*) AS sessions, SUM(is_purchased) AS converted, "
-            "ROUND(SUM(is_purchased)*100.0/COUNT(*),2) AS conversion_rate FROM funnel_wide "
-            "GROUP BY Country ORDER BY conversion_rate DESC",
-        'funnel_wide_export.csv':
-            "SELECT * FROM funnel_wide",
-    }
+    funnel_wide_csv = OUTPUT_DIR / 'funnel_wide.csv'
+    if not funnel_wide_csv.exists():
+        print(f"  ERROR: {funnel_wide_csv} not found. Run python/python/main.py first.")
+        return
 
-    for filename, query in queries.items():
-        output_file = POWERBI_DIR / filename
-        args = _mysql_base_args()
-        args.extend(['--batch', '--raw', DB, '-e', query])
-        result = subprocess.run(args, capture_output=True, text=True,
-                                encoding='utf-8', errors='replace')
-        if result.returncode != 0 or not result.stdout:
-            print(f"  {filename}: FAILED - {result.stderr.strip()}")
-            continue
-        reader = csv.reader(io.StringIO(result.stdout), delimiter='\t')
-        with open(output_file, 'w', encoding='utf-8', newline='') as f:
-            writer = csv.writer(f)
-            for row in reader:
-                writer.writerow(row)
-        with open(output_file, 'r', encoding='utf-8') as f:
-            lines = sum(1 for _ in f) - 1
-        print(f"  {filename}: {lines} rows")
+    fw = pd.read_csv(funnel_wide_csv)
+
+    # funnel_overview (前 10000 行, 核心列)
+    core_cols = ['session_id', 'customer_id', 'traffic_source', 'device_type',
+                 'experiment_group', 'step1_home', 'step2_plp', 'step3_pdp',
+                 'step4_cart', 'step5_checkout', 'step_purchase',
+                 'country', 'loyalty_tier', 'acquisition_channel']
+    overview = fw[[c for c in core_cols if c in fw.columns]].head(10000)
+    overview.to_csv(POWERBI_DIR / 'funnel_overview.csv', index=False, encoding='utf-8-sig')
+    print(f"  funnel_overview.csv: {len(overview)} rows")
+
+    # channel_analysis
+    ch = fw.groupby('traffic_source').agg(
+        sessions=('session_id', 'nunique'),
+        purchases=('step_purchase', 'sum'),
+    ).reset_index()
+    ch['conversion_rate'] = (ch['purchases'] / ch['sessions'] * 100).round(2)
+    ch.to_csv(POWERBI_DIR / 'channel_analysis.csv', index=False, encoding='utf-8-sig')
+    print(f"  channel_analysis.csv: {len(ch)} rows")
+
+    # device_analysis
+    dev = fw.groupby('device_type').agg(
+        sessions=('session_id', 'nunique'),
+        purchases=('step_purchase', 'sum'),
+    ).reset_index()
+    dev['conversion_rate'] = (dev['purchases'] / dev['sessions'] * 100).round(2)
+    dev.to_csv(POWERBI_DIR / 'device_analysis.csv', index=False, encoding='utf-8-sig')
+    print(f"  device_analysis.csv: {len(dev)} rows")
+
+    # country_analysis
+    ctry = fw.groupby('country').agg(
+        sessions=('session_id', 'nunique'),
+        purchases=('step_purchase', 'sum'),
+    ).reset_index()
+    ctry['conversion_rate'] = (ctry['purchases'] / ctry['sessions'] * 100).round(2)
+    ctry.to_csv(POWERBI_DIR / 'country_analysis.csv', index=False, encoding='utf-8-sig')
+    print(f"  country_analysis.csv: {len(ctry)} rows")
+
+    # funnel_wide_export (完整宽表前 50000 行)
+    fw.head(50000).to_csv(POWERBI_DIR / 'funnel_wide_export.csv', index=False, encoding='utf-8-sig')
+    print(f"  funnel_wide_export.csv: {min(len(fw), 50000)} rows")
 
     print(f"\nPower BI data exported to: {POWERBI_DIR}")
 
@@ -177,7 +189,7 @@ def main() -> None:
     print("=" * 60)
 
     if not MYSQL_CONFIG['password']:
-        print("\n[ERROR] MYSQL_PASSWORD not set. Please create .env file.")
+        print("\n[ERROR] MYSQL_PASSWORD not set. Create .env file.")
         sys.exit(1)
 
     result = subprocess.run(
@@ -187,18 +199,19 @@ def main() -> None:
     if CONTAINER not in result.stdout:
         print(f"\n[ERROR] Container {CONTAINER} not running.")
         sys.exit(1)
+
     print(f"Container {CONTAINER} is running")
 
     if not step1_create_tables():
         print("\n[ABORT] Table creation failed")
         sys.exit(1)
-    if not step2_load_csv_via_pandas():
-        print("\n[ABORT] CSV load failed")
+    if not step2_load_tables():
+        print("\n[ABORT] Data load failed")
         sys.exit(1)
-    if not step3_run_analysis_sql():
+    if not step3_run_analysis():
         print("\n[ABORT] SQL analysis failed")
         sys.exit(1)
-    step4_verify_data()
+    step4_verify()
     step5_export_powerbi()
     print("\nDone!")
 

@@ -38,22 +38,49 @@
       "title": [
         {
           "properties": {
-            "show": { "expr": { "Literal": { "Value": "true" } } },
-            "text": { "expr": { "Literal": { "Value": "'总流量'" } } },
-            "fontSize": { "expr": { "Literal": { "Value": "14D" } } }
-          }
-        }
-      ],
-      "labels": [
-        {
-          "properties": {
-            "show": { "expr": { "Literal": { "Value": "true" } } },
-            "fontSize": { "expr": { "Literal": { "Value": "36D" } } },
-            "color": { "expr": { "Literal": { "Value": "'#2E86AB'" } } }
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'总流量'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "20D"
+                }
+              }
+            }
           }
         }
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "bf59b3f671b839bfdb03",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "funnel_overview"
+              }
+            },
+            "Property": "首页会话"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

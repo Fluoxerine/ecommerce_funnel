@@ -1,68 +1,81 @@
 # 数据字典
 
-## 原始数据表：user_behavior / customer_journey.csv
+> 数据集：E-Commerce Transactions + Clickstream | 5 表, 41 字段, 2.2M+ 条记录
 
-| 字段 | 类型 | 说明 | 取值范围 |
-|------|------|------|----------|
-| SessionID | 字符串 | 会话唯一标识 | session_0 ~ session_4999（共 5,000 个会话） |
-| UserID | 字符串 | 用户唯一标识 | user_1001 ~ user_2999（共 1,872 个用户） |
-| Timestamp（CSV）/ EventTime（MySQL） | 日期时间 | 页面访问时间戳 | 2025-01-01 ~ 2025-12-31 |
-| PageType | 字符串 | 页面类型 | home（首页）、product_page（商品页）、cart（购物车）、checkout（结账页）、confirmation（确认页） |
-| DeviceType | 字符串 | 设备类型 | Desktop（桌面）、Mobile（移动）、Tablet（平板） |
-| Country | 字符串 | 用户所在国家 | USA、UK、Germany、France、Canada、India、Australia |
-| ReferralSource | 字符串 | 流量来源渠道 | Direct（直接）、Email（邮件）、Google（搜索）、Social Media（社交媒体） |
-| TimeOnPage_seconds | 整数 | 该页面停留时长（秒） | 15 ~ 180 |
-| ItemsInCart | 整数 | 当前购物车商品数 | 0 ~ 5 |
-| Purchased | 整数 | 是否最终购买（会话级标记） | 0=未购买, 1=已购买 |
+---
 
-> **注意**：CSV 文件中列名为 `Timestamp`，导入 MySQL 后列名变为 `EventTime`，两者指代相同字段，仅命名不同。导入时按列的位置顺序映射，无需手动修改列名。
+## 表 1: events（用户行为事件）
 
-## 原始数据概况
+| 字段 | 类型 | 说明 | 示例值 |
+|:---|:---|:---|:---|
+| `event_id` | INT | 事件唯一 ID | 1-2000000 |
+| `timestamp` | DATETIME | 事件时间 | 2021-01-01 ~ 2023-12-31 |
+| `customer_id` | INT | 用户 ID (关联 customers) | 1-100000 |
+| `session_id` | INT | 会话 ID | 1-633462 |
+| `event_type` | STRING | 事件类型 | view / click / add_to_cart / bounce / purchase |
+| `product_id` | INT | 商品 ID (关联 products, 可为空) | 1-2000 |
+| `device_type` | STRING | 设备类型 | mobile / desktop / tablet |
+| `traffic_source` | STRING | 流量来源 | Organic / Paid Search / Social / Email / Direct |
+| `campaign_id` | INT | 广告活动 ID (关联 campaigns) | 1-50 |
+| `page_category` | STRING | 页面类型 | Home / PLP / PDP / Cart / Checkout |
+| `session_duration_sec` | FLOAT | 会话时长(秒) | 0.1-7533.8 |
+| `experiment_group` | STRING | A/B 实验分组 | Control / Variant_A / Variant_B |
 
-| 指标 | 数值 |
-|------|------|
-| 总记录数 | 12,719 |
-| 总会话数 | 5,000 |
-| 总用户数 | 1,872 |
-| 各页面记录数 | home: 5,000 / product_page: 3,987 / cart: 1,599 / checkout: 1,123 / confirmation: 1,010 |
-| Purchased=1 记录数 | 5,050（同一会话内多个页面均标记为 1） |
-| Purchased=0 记录数 | 7,669 |
+**事件分布**: view(1,043,573) > click(379,008) > add_to_cart(284,370) > bounce(189,922) > purchase(103,127)
 
-## 清洗后宽表：funnel_wide
+---
+
+## 表 2: transactions（交易订单）
 
 | 字段 | 类型 | 说明 |
-|------|------|------|
-| SessionID | 字符串 | 会话 ID（主键） |
-| UserID | 字符串 | 用户 ID |
-| DeviceType | 字符串 | 该会话主要使用的设备（取众数） |
-| Country | 字符串 | 该会话主要所在国家（取众数） |
-| ReferralSource | 字符串 | 该会话主要流量来源（取众数） |
-| step1_home | 0/1 | 是否访问了首页 |
-| step2_product | 0/1 | 是否访问了商品页 |
-| step3_cart | 0/1 | 是否访问了购物车 |
-| step4_checkout | 0/1 | 是否访问了结账页 |
-| step5_confirm | 0/1 | 是否访问了支付确认页 |
-| is_purchased | 0/1 | 该会话是否最终购买（= step5_confirm） |
+|:---|:---|:---|
+| `transaction_id` | INT | 交易 ID |
+| `timestamp` | DATETIME | 交易时间 |
+| `customer_id` | INT | 用户 ID |
+| `product_id` | INT | 商品 ID |
+| `quantity` | INT | 购买数量 |
+| `discount_applied` | FLOAT | 折扣金额 |
+| `gross_revenue` | FLOAT | 交易毛收入 (均值 ¥90.36, 中位数 ¥68.00) |
+| `campaign_id` | INT | 关联广告活动 |
+| `refund_flag` | INT | 退款标记 (0/1, 退款率 3.1%) |
 
-## Python 衍生字段
+---
 
-| 字段 | 来源 | 说明 |
-|------|------|------|
-| hour | Timestamp | 访问时段（0-23） |
-| weekday | Timestamp | 星期几（0=周一, 6=周日） |
-| stage | PageType 映射 | 漏斗阶段中文标签（如"3.加入购物车"） |
-| session_is_converted | Purchased 聚合 | 会话级转化标记（0/1） |
+## 表 3: customers（用户画像）
 
-## 数据质量
+| 字段 | 类型 | 说明 |
+|:---|:---|:---|
+| `customer_id` | INT | 用户 ID |
+| `signup_date` | DATE | 注册日期 |
+| `country` | STRING | 国家 (US/IN/UK/BR/CA/DE/AU) |
+| `age` | INT | 年龄 (18-70) |
+| `gender` | STRING | 性别 (Male/Female/Other) |
+| `loyalty_tier` | STRING | 忠诚度等级 (Bronze/Silver/Gold/Platinum) |
+| `acquisition_channel` | STRING | 获客渠道 (Organic/Paid Search/Social/Email/Referral) |
 
-经过以下清洗步骤后，数据质量检查结果：
+---
 
-| 清洗步骤 | 丢弃记录数 | 说明 |
-|----------|-----------|------|
-| 去重（SessionID+UserID+Timestamp+PageType） | 0 | 原始数据无重复 |
-| 核心字段非空过滤 | 0 | 所有核心字段均无缺失 |
-| 未来时间过滤 | 0 | 无非未来时间数据 |
-| 数值异常过滤 | 0 | TimeOnPage 均在 15-180 秒，ItemsInCart 均在 0-5 |
-| Purchased 值域过滤 | 0 | 仅含 0/1 |
-| 会话总停留 < 5s 过滤 | 0 | 所有会话总停留均 ≥ 15s |
-| **最终保留** | **12,719 条（100%）** | **5,000 个会话** |
+## 表 4: products（商品信息）
+
+| 字段 | 类型 | 说明 |
+|:---|:---|:---|
+| `product_id` | INT | 商品 ID |
+| `category` | STRING | 品类 (Electronics/Fashion/Home/Grocery/Sports/Beauty) |
+| `brand` | STRING | 品牌 (100 个品牌) |
+| `base_price` | FLOAT | 基础价格 (¥5.11-464.58) |
+| `launch_date` | DATE | 上市日期 |
+| `is_premium` | INT | 是否高端商品 (0/1, 各 50%) |
+
+---
+
+## 表 5: campaigns（广告活动）
+
+| 字段 | 类型 | 说明 |
+|:---|:---|:---|
+| `campaign_id` | INT | 广告活动 ID |
+| `channel` | STRING | 投放渠道 (Paid Search/Email/Social/Display/Affiliate) |
+| `objective` | STRING | 目标 (Acquisition/Retention/Reactivation/Cross-sell) |
+| `start_date` | DATE | 开始日期 |
+| `end_date` | DATE | 结束日期 |
+| `target_segment` | STRING | 目标人群 (New Customers/High Value/Churn Risk/Deal Seekers/All) |
+| `expected_uplift` | FLOAT | 预期提升率 (2.3%-14.4%) |
