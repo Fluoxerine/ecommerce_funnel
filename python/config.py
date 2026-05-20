@@ -128,9 +128,13 @@ ACCENT = '#E74C3C'
 # ── 日志配置 ──────────────────────────────────────────
 LOG_FORMAT = '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
 LOG_DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')  # 支持 DEBUG/INFO/WARNING/ERROR
 
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 CHART_DIR.mkdir(parents=True, exist_ok=True)
+
+_file_handler = logging.FileHandler(OUTPUT_DIR / 'analysis.log', encoding='utf-8')
+_file_handler.setLevel(getattr(logging, LOG_LEVEL, logging.INFO))
 
 logging.basicConfig(
     level=logging.INFO,
@@ -138,8 +142,21 @@ logging.basicConfig(
     datefmt=LOG_DATE_FORMAT,
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler(OUTPUT_DIR / 'analysis.log', encoding='utf-8'),
+        _file_handler,
     ],
 )
 
 logger = logging.getLogger('funnel_cro')
+
+# ── 分析版本信息 ─────────────────────────────────────
+ANALYSIS_VERSION = '2.0'
+ANALYSIS_PARAMS = {
+    'version': ANALYSIS_VERSION,
+    'data_years': '2021-2023',
+    'funnel_methodology': {
+        'page_coverage': '各页面独立统计到达会话数 (允许多入口/深链)',
+        'strict_path': '按时间顺序 Home→PLP→PDP→Cart→Checkout (人数必递减)',
+        'event_funnel': '行为级顺序漏斗 (view→click→add_cart→purchase)',
+        'key_clarification': '页面覆盖 ≠ 严格漏斗。覆盖分析中"交叉到达率"不是"转化率", 下游可因深链超上游。',
+    },
+}

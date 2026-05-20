@@ -11,7 +11,11 @@ from python.config import (
 )
 
 # ── 中文字体 ────────────────────────────────────────
-_font_candidates = ['Microsoft YaHei', 'SimHei', 'KaiTi', 'Noto Sans CJK SC']
+_font_candidates = [
+    'Microsoft YaHei', 'SimHei', 'KaiTi', 'Noto Sans CJK SC',
+    'WenQuanYi Micro Hei', 'Noto Sans SC', 'Source Han Sans SC',
+    'SimSun', 'FangSong', 'AR PL UMing CN',
+]
 _available = {f.name for f in fm.fontManager.ttflist}
 _font_to_use = next((f for f in _font_candidates if f in _available), None)
 if _font_to_use:
@@ -19,6 +23,7 @@ if _font_to_use:
 else:
     matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'DejaVu Sans']
 matplotlib.rcParams['axes.unicode_minus'] = False
+logger.info("图表中文字体: %s", _font_to_use or 'SimHei (fallback)')
 
 # ── 全局样式 ────────────────────────────────────────
 plt.rcParams.update({
@@ -114,7 +119,9 @@ def plot_cleaning_funnel(cleaning_stats: dict) -> None:
 def plot_page_funnel(funnel_df: 'pd.DataFrame') -> None:
     labels = funnel_df['漏斗阶段'].tolist()
     counts = funnel_df['到达会话数'].tolist()
-    rates = funnel_df['上一阶段转化率(%)'].tolist()
+    # 兼容新旧列名: 优先使用 "交叉到达率(%)", 回退到旧名 "上一阶段转化率(%)"
+    rate_col = '交叉到达率(%)' if '交叉到达率(%)' in funnel_df.columns else '上一阶段转化率(%)'
+    rates = funnel_df[rate_col].tolist()
 
     custom_text = []
     for i, (label, count, rate) in enumerate(zip(labels, counts, rates)):
@@ -123,7 +130,7 @@ def plot_page_funnel(funnel_df: 'pd.DataFrame') -> None:
         else:
             custom_text.append(
                 f'<b>{label}</b><br>{count:,} 会话<br>'
-                f'<i>交叉转化率 {rate}%</i>'
+                f'<i>交叉到达率 {rate}%</i>'
             )
 
     fig = go.Figure(go.Funnel(
@@ -138,13 +145,14 @@ def plot_page_funnel(funnel_df: 'pd.DataFrame') -> None:
     ))
     fig.update_layout(
         title=dict(
-            text='页面级转化漏斗<br>'
-                 '<sup>交叉转化率 = 同时到达前后两页的会话 / 到达前页的会话</sup>',
+            text='页面覆盖分析 (Page Coverage)<br>'
+                 '<sup>各页面独立到达统计 | 交叉到达率 = 同时到达前后两页的会话 / 到达前页的会话</sup>'
+                 '<br><sup>注意: 非严格顺序漏斗, 下游页面可因深链流量超过上游</sup>',
             font=dict(size=17),
         ),
         template='plotly_white',
-        height=550,
-        margin=dict(t=100, b=40, l=60, r=40),
+        height=580,
+        margin=dict(t=120, b=40, l=60, r=40),
         font=dict(size=13, color='#2C3E50'),
     )
     _save(fig, '01_page_funnel', is_plotly=True)
@@ -189,8 +197,13 @@ def plot_channel_funnels(channel_funnels: dict[str, 'pd.DataFrame']) -> None:
                   'Email': '#D64545', 'Direct': '#4CAF82'}
     short_labels = ['首页', '列表页', '详情页', '购物车', '结算页']
 
+    # 兼容新旧列名
+    _rate_col = next(
+        c for c in ['交叉到达率(%)', '上一阶段转化率(%)']
+        if c in next(iter(channel_funnels.values())).columns
+    )
     sorted_channels = sorted(channel_funnels.keys(),
-                             key=lambda ch: channel_funnels[ch].iloc[-1]['上一阶段转化率(%)'],
+                             key=lambda ch: channel_funnels[ch].iloc[-1][_rate_col],
                              reverse=True)
 
     for i, ch in enumerate(sorted_channels):
@@ -198,7 +211,7 @@ def plot_channel_funnels(channel_funnels: dict[str, 'pd.DataFrame']) -> None:
         df = channel_funnels[ch]
         full_color = colors_map.get(ch, C_BLUE)
         vals = df['到达会话数'].values
-        rates_arr = df['上一阶段转化率(%)'].values
+        rates_arr = df[_rate_col].values
 
         # 找瓶颈
         sub_rates = rates_arr[1:]
@@ -613,7 +626,12 @@ def plot_category_funnel(cat_df: 'pd.DataFrame') -> None:
 # 13 — 严格漏斗 vs 覆盖分析 对比
 # ═══════════════════════════════════════════════════════════
 def plot_strict_vs_coverage(strict_df: 'pd.DataFrame') -> None:
-    """严格路径漏斗 vs 页面覆盖分析 双柱对比"""
+    """严格路径漏斗 vs 页面覆盖分析 双柱对比
+
+    两种方法的本质区别:
+    - 页面覆盖 (宽松): 只要访问过该页面即计入, 独立统计各页面, 允许多入口/深链
+    - 严格路径 (顺序): 必须按 Home→PLP→PDP→Cart→Checkout 时间顺序访问, 人数必递减
+    """
     from python.config import FUNNEL_COLORS
 
     fig, ax = plt.subplots(figsize=(13, 7))
@@ -626,12 +644,12 @@ def plot_strict_vs_coverage(strict_df: 'pd.DataFrame') -> None:
 
     bars1 = ax.bar(
         x_pos - width / 2, coverage_vals, width,
-        label='页面覆盖（宽松）', color='#A0AAB5', edgecolor='white',
+        label='页面覆盖 (宽松) — 各页面独立统计', color='#A0AAB5', edgecolor='white',
         linewidth=1.2, alpha=0.85, zorder=3,
     )
     bars2 = ax.bar(
         x_pos + width / 2, strict_vals, width,
-        label='严格路径（顺序）', color='#3A7CA5', edgecolor='white',
+        label='严格路径 (顺序) — 按时间顺序访问', color='#3A7CA5', edgecolor='white',
         linewidth=1.2, alpha=0.9, zorder=3,
     )
 
@@ -646,12 +664,12 @@ def plot_strict_vs_coverage(strict_df: 'pd.DataFrame') -> None:
             f'{val:,}', ha='center', fontsize=9, fontweight='bold', color=C_BLUE,
         )
 
-    # 标注差异
+    # 标注差异 (深链流量)
     diffs = strict_df['覆盖-严格差异'].values
     for i, diff in enumerate(diffs):
         ax.text(
             i, max(coverage_vals) * 0.55,
-            f'Δ {diff:,}', ha='center', fontsize=9.5,
+            f'深链 Δ{diff:,}', ha='center', fontsize=9.5,
             color=C_RED, fontweight='bold',
             bbox=dict(boxstyle='round,pad=0.2', facecolor='white',
                       edgecolor=CL_RED, alpha=0.8),
@@ -660,11 +678,12 @@ def plot_strict_vs_coverage(strict_df: 'pd.DataFrame') -> None:
     ax.set_xticks(x_pos)
     ax.set_xticklabels(labels, fontsize=11)
     ax.set_title(
-        '严格路径漏斗 vs 页面覆盖分析',
-        fontsize=16, pad=18,
+        '严格路径漏斗 vs 页面覆盖分析\n'
+        '覆盖分析允许深链多入口 (下游可超上游), 严格路径人数必递减',
+        fontsize=14, pad=18,
     )
     ax.set_ylabel('会话数', fontsize=12, labelpad=10)
-    ax.legend(fontsize=11, framealpha=0.9, edgecolor=CL_GREY)
+    ax.legend(fontsize=10, framealpha=0.9, edgecolor=CL_GREY)
     ax.tick_params(left=False, bottom=False)
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f'{v/1000:.0f}K'))
     fig.tight_layout()
@@ -773,10 +792,11 @@ def plot_new_vs_returning(nr_results: dict) -> None:
         ax_page.tick_params(left=False)
         max_v = max(page_vals)
         for bar, (_, row) in zip(bars, page_df.iterrows()):
+            rate_val = row.get('交叉到达率(%)', row.get('上一阶段转化率(%)', 0))
             ax_page.text(
                 bar.get_width() + max_v * 0.02,
                 bar.get_y() + bar.get_height() / 2,
-                f'{int(row["到达会话数"]):,}  [{row["上一阶段转化率(%)"]:.1f}%]',
+                f'{int(row["到达会话数"]):,}  [{rate_val:.1f}%]',
                 va='center', fontsize=9, color=C_DARK,
             )
         ax_page.set_xlim(0, max_v * 1.4)

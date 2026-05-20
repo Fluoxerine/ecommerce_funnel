@@ -80,15 +80,15 @@ class TestComputePageFunnel:
     def test_first_stage_100_pct(self):
         wide = _make_wide_df()
         funnel_df = compute_page_funnel(wide)
-        assert funnel_df.iloc[0]['上一阶段转化率(%)'] == 100.0
+        assert funnel_df.iloc[0]['交叉到达率(%)'] == 100.0
 
     def test_cross_reference_rate_not_exceed_100(self):
         """交叉引用转化率不应超过 100%"""
         wide = _make_wide_df()
         funnel_df = compute_page_funnel(wide)
         for _, row in funnel_df[1:].iterrows():
-            assert row['上一阶段转化率(%)'] <= 100.0, \
-                f"转化率 {row['上一阶段转化率(%)']}% > 100% at {row['漏斗阶段']}"
+            assert row['交叉到达率(%)'] <= 100.0, \
+                f"转化率 {row['交叉到达率(%)']}% > 100% at {row['漏斗阶段']}"
 
 
 class TestComputeEventFunnel:

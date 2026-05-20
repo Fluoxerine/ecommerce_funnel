@@ -20,15 +20,33 @@ from python.config import (
 # ═══════════════════════════════════════════════════════════════
 
 def compute_page_funnel(funnel_wide: pd.DataFrame) -> pd.DataFrame:
-    """页面级漏斗 (Home→PLP→PDP→Cart→Checkout) — 交叉引用转化率处理多入口"""
+    """页面覆盖分析 — 各页面独立到达统计 + 相邻页面交叉到达率
+
+    重要: 这是**页面覆盖分析** (Page Coverage), 不是严格路径漏斗。
+    - 每个页面的到达会话数是独立统计的 ("只要访问过该页面即计入")
+    - 多入口/深链场景下, 下游页面会话数可能超过上游 (如 PLP > Home)
+    - "交叉到达率" = 同时到达前后两页的会话 / 到达前页的会话
+      这是重叠率 (Overlap Rate), 不是严格顺序转化率
+    - 如需严格按时间顺序的漏斗, 请使用 compute_strict_page_funnel()
+    """
     logger.info("=" * 60)
-    logger.info("6. 页面级漏斗分析")
+    logger.info("6. 页面覆盖分析 (Page Coverage)")
     logger.info("=" * 60)
+    logger.info("注意: 这是页面覆盖统计, 非严格路径漏斗。下游页面可因深链流量超过上游。")
 
     steps = PAGE_FUNNEL_COLS
 
     # 各页面独立到达会话数
     counts = [int(funnel_wide[col].sum()) for col in steps]
+
+    # 检测倒挂现象并警示
+    for i in range(1, len(steps)):
+        if counts[i] > counts[i - 1]:
+            logger.info(
+                "  [深链警示] %s 到达 (%s) > %s 到达 (%s) — 存在直接落地该页面的深链流量",
+                PAGE_FUNNEL_ORDER[i], f"{counts[i]:,}",
+                PAGE_FUNNEL_ORDER[i - 1], f"{counts[i - 1]:,}",
+            )
 
     # 交叉引用：同时到达前后两个页面的会话数
     overlap_counts = []
@@ -44,7 +62,7 @@ def compute_page_funnel(funnel_wide: pd.DataFrame) -> pd.DataFrame:
         '到达会话数': counts,
     })
 
-    # 转化率：同时到达 / 到达前页
+    # 交叉到达率 = 同时到达前后两页 / 到达前页 (上限100%)
     rates = []
     for i in range(len(steps)):
         if i == 0:
@@ -52,20 +70,23 @@ def compute_page_funnel(funnel_wide: pd.DataFrame) -> pd.DataFrame:
         else:
             prev = counts[i - 1]
             both = overlap_counts[i - 1]
-            rates.append(round(both / prev * 100, 2) if prev > 0 else 0.0)
+            rate = min(round(both / prev * 100, 2), 100.0) if prev > 0 else 0.0
+            rates.append(rate)
 
     # 整体：各页面在所有会话中的到达率（因多入口场景，首页不是必经之路）
     total_sessions = len(funnel_wide)
-    funnel_df['上一阶段转化率(%)'] = rates
+    funnel_df['交叉到达率(%)'] = rates
     funnel_df['整体到达率(%)'] = (funnel_df['到达会话数'] / total_sessions * 100).round(2)
 
     for _, row in funnel_df.iterrows():
-        logger.info("  %s: %s (上阶段 %.2f%% / 整体到达率 %.2f%%)",
+        logger.info("  %s: %s (交叉到达率 %.2f%% / 整体到达率 %.2f%%)",
                     row['漏斗阶段'], f"{int(row['到达会话数']):,}",
-                    row['上一阶段转化率(%)'], row['整体到达率(%)'])
+                    row['交叉到达率(%)'], row['整体到达率(%)'])
 
-    churn_idx = funnel_df[1:]['上一阶段转化率(%)'].idxmin()
-    logger.info("页面漏斗最高流失环节: %s", funnel_df.loc[churn_idx, '漏斗阶段'])
+    churn_idx = funnel_df[1:]['交叉到达率(%)'].idxmin()
+    logger.info("页面覆盖最大断点: %s (交叉到达率 %.2f%%)",
+                funnel_df.loc[churn_idx, '漏斗阶段'],
+                funnel_df.loc[churn_idx, '交叉到达率(%)'])
     return funnel_df
 
 
@@ -112,11 +133,11 @@ def compute_strict_page_funnel(funnel_wide: pd.DataFrame,
     })
 
     total_sessions = len(funnel_wide)
-    funnel_df['上一阶段转化率(%)'] = [100.0] + [
+    funnel_df['顺序转化率(%)'] = [100.0] + [
         round(counts[i] / counts[i - 1] * 100, 2) if counts[i - 1] > 0 else 0
         for i in range(1, len(counts))
     ]
-    funnel_df['整体到达率(%)'] = (
+    funnel_df['整体留存率(%)'] = (
         funnel_df['严格路径到达会话数'] / total_sessions * 100
     ).round(2)
     funnel_df['覆盖-严格差异'] = [
@@ -125,10 +146,10 @@ def compute_strict_page_funnel(funnel_wide: pd.DataFrame,
 
     for _, row in funnel_df.iterrows():
         logger.info(
-            "  %s: 严格 %s (%.1f%%) | 覆盖 %s | 差异 %s",
+            "  %s: 严格 %s (留存率 %.1f%%) | 覆盖 %s | 差异 %s",
             row['漏斗阶段'],
             f"{int(row['严格路径到达会话数']):,}",
-            row['整体到达率(%)'],
+            row['整体留存率(%)'],
             f"{int(row['覆盖到达会话数']):,}",
             f"{int(row['覆盖-严格差异']):,}",
         )
@@ -136,7 +157,7 @@ def compute_strict_page_funnel(funnel_wide: pd.DataFrame,
     loss = funnel_df.iloc[-1]
     logger.info(
         "严格漏斗 Home→Checkout 留存: %.2f%% (%s / %s)",
-        loss['整体到达率(%)'],
+        loss['整体留存率(%)'],
         f"{int(loss['严格路径到达会话数']):,}",
         f"{int(funnel_df.iloc[0]['严格路径到达会话数']):,}",
     )
@@ -261,9 +282,9 @@ def compute_event_funnel(funnel_wide: pd.DataFrame) -> pd.DataFrame:
 
 
 def compute_channel_funnels(funnel_wide: pd.DataFrame) -> dict[str, pd.DataFrame]:
-    """每个 traffic_source 独立页面漏斗，交叉引用计算真实转化率"""
+    """每个 traffic_source 独立页面覆盖漏斗 + 交叉到达率"""
     logger.info("=" * 60)
-    logger.info("8. 渠道专属漏斗")
+    logger.info("8. 各渠道页面覆盖漏斗")
     logger.info("=" * 60)
 
     steps = PAGE_FUNNEL_COLS
@@ -277,15 +298,16 @@ def compute_channel_funnels(funnel_wide: pd.DataFrame) -> dict[str, pd.DataFrame
         for i in range(1, len(steps)):
             prev = counts[i - 1]
             both = int(((ch_data[steps[i - 1]] == 1) & (ch_data[steps[i]] == 1)).sum())
-            rates.append(round(both / prev * 100, 2) if prev > 0 else 0.0)
+            rate = min(round(both / prev * 100, 2), 100.0) if prev > 0 else 0.0
+            rates.append(rate)
 
         ch_total = len(ch_data)
-        funnel_df['上一阶段转化率(%)'] = rates
+        funnel_df['交叉到达率(%)'] = rates
         funnel_df['整体到达率(%)'] = (funnel_df['到达会话数'] / ch_total * 100).round(2) if ch_total > 0 else 0
         channel_funnels[channel] = funnel_df
 
-        # 转化率瓶颈 (最小转化率)
-        churn_idx = funnel_df[1:]['上一阶段转化率(%)'].idxmin()
+        # 交叉到达率瓶颈 (最小交叉到达率)
+        churn_idx = funnel_df[1:]['交叉到达率(%)'].idxmin()
         # 绝对流失瓶颈 (最大绝对流失 = 前阶段覆盖 - 交叉到达)
         overlap_counts = []
         for i in range(1, len(steps)):
@@ -299,10 +321,10 @@ def compute_channel_funnels(funnel_wide: pd.DataFrame) -> dict[str, pd.DataFrame
         abs_churn_idx = absolute_losses.index(max(absolute_losses)) + 1  # +1 skip index 0
 
         logger.info(
-            "  %s: CR瓶颈=%s (%.2f%%), 绝对流失瓶颈=%s (%s 会话流失)",
+            "  %s: 交叉到达率瓶颈=%s (%.2f%%), 绝对流失瓶颈=%s (%s 会话流失)",
             channel,
             funnel_df.loc[churn_idx, '漏斗阶段'],
-            funnel_df.loc[churn_idx, '上一阶段转化率(%)'],
+            funnel_df.loc[churn_idx, '交叉到达率(%)'],
             funnel_df.loc[abs_churn_idx, '漏斗阶段'],
             f"{max(absolute_losses):,}",
         )
@@ -394,19 +416,19 @@ def compute_new_vs_returning_funnel(
         funnel_df = pd.DataFrame({
             '漏斗阶段': PAGE_FUNNEL_ORDER,
             '到达会话数': counts,
-            '上一阶段转化率(%)': rates,
+            '交叉到达率(%)': rates,
         })
         funnel_df['整体到达率(%)'] = (
             funnel_df['到达会话数'] / len(subset) * 100
         ).round(2)
         results[f'{label}_page'] = funnel_df
 
-        churn_idx = funnel_df[1:]['上一阶段转化率(%)'].idxmin()
+        churn_idx = funnel_df[1:]['交叉到达率(%)'].idxmin()
         logger.info(
-            "  %s 页面漏斗: 瓶颈=%s (%.2f%%) | Home→Checkout %.2f%%",
+            "  %s 页面漏斗: 瓶颈=%s (交叉到达率 %.2f%%) | Home→Checkout %.2f%%",
             label,
             funnel_df.loc[churn_idx, '漏斗阶段'],
-            funnel_df.loc[churn_idx, '上一阶段转化率(%)'],
+            funnel_df.loc[churn_idx, '交叉到达率(%)'],
             funnel_df.iloc[-1]['整体到达率(%)'],
         )
 
@@ -441,8 +463,8 @@ def compute_new_vs_returning_funnel(
     for i, stage in enumerate(PAGE_FUNNEL_ORDER):
         if i > 0:
             gap = (
-                ret_page.iloc[i]['上一阶段转化率(%)']
-                - new_page.iloc[i]['上一阶段转化率(%)']
+                ret_page.iloc[i]['交叉到达率(%)']
+                - new_page.iloc[i]['交叉到达率(%)']
             )
             gaps.append((stage, gap))
     if gaps:
@@ -1132,7 +1154,16 @@ def compute_cohort_retention(funnel_wide: pd.DataFrame) -> pd.DataFrame:
 # ═══════════════════════════════════════════════════════════════
 
 def save_baseline(funnel_wide: pd.DataFrame) -> dict[str, float | int | str]:
-    """保存漏斗指标快照到 JSON — 含会话/浏览双转化率口径"""
+    """保存漏斗基准快照到 JSON
+
+    双口径说明:
+    - session_conversion_rate (整体会话转化率): 购买会话 / 全部会话
+      分母=所有会话(含未浏览直接购买的异常场景)
+    - view_to_purchase_rate (浏览到购买转化率): 购买会话 / 有过浏览行为的会话
+      分母=仅包含至少有一次浏览行为的会话, 排除纯技术流量
+
+    两个指标都正确, 只是分母不同, 适用于不同分析场景。
+    """
     # total_revenue 为客户级数据，按 customer_id 去重求和
     cust_revenue = funnel_wide[['customer_id', 'total_revenue', 'has_refund']].drop_duplicates('customer_id')
     total_sessions = int(len(funnel_wide))
@@ -1140,7 +1171,13 @@ def save_baseline(funnel_wide: pd.DataFrame) -> dict[str, float | int | str]:
     view_sessions = int(funnel_wide['step_view'].sum())
 
     snapshot = {
-        'timestamp': datetime.now().isoformat(),
+        'analysis_timestamp': datetime.now().isoformat(),
+        'analysis_version': '2.0',
+        'metric_definitions': {
+            'session_conversion_rate': '购买会话数 / 全部会话数 × 100 (整体会话转化率)',
+            'view_to_purchase_rate': '购买会话数 / 浏览会话数 × 100 (浏览到购买转化率)',
+            'note': '双口径定义不同, 不可直接比较。session_cr 分母更大故数值更低, view_to_purchase_cr 仅含浏览会话故数值更高。',
+        },
         'total_sessions': total_sessions,
         'purchase_sessions': purchase_sessions,
         'view_sessions': view_sessions,
@@ -1149,14 +1186,16 @@ def save_baseline(funnel_wide: pd.DataFrame) -> dict[str, float | int | str]:
         'total_revenue': round(float(cust_revenue['total_revenue'].sum()), 2),
         'refund_rate': round(cust_revenue['has_refund'].mean() * 100, 2),
         'avg_session_duration': round(float(funnel_wide['total_duration_sec'].mean()), 2),
-        'steps': {col: int(funnel_wide[col].sum()) for col in PAGE_FUNNEL_COLS},
+        'page_coverage': {col: int(funnel_wide[col].sum()) for col in PAGE_FUNNEL_COLS},
+        'page_coverage_note': '页面覆盖统计(独立到达即计入), 非严格路径漏斗。下游页面可因深链流量超过上游。',
     }
-    logger.info("会话转化率: %.2f%% (购买 %s / 全部 %s)",
+    logger.info("整体会话转化率 (Session CR): %.2f%% = 购买 %s / 全部 %s 会话",
                 snapshot['session_conversion_rate'],
                 f"{purchase_sessions:,}", f"{total_sessions:,}")
-    logger.info("浏览转化率: %.2f%% (购买 %s / 浏览 %s)",
+    logger.info("浏览到购买转化率 (View-to-Purchase CR): %.2f%% = 购买 %s / 浏览 %s 会话",
                 snapshot['view_to_purchase_rate'],
                 f"{purchase_sessions:,}", f"{view_sessions:,}")
+    logger.info("注意: 两个转化率口径不同, 不可直接比较。")
     with open(BASELINE_JSON, 'w', encoding='utf-8') as f:
         json.dump(snapshot, f, ensure_ascii=False, indent=2)
     logger.info("基准快照已保存: %s", BASELINE_JSON)
