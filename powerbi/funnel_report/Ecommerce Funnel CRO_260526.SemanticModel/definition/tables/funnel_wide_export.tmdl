@@ -1,0 +1,381 @@
+table funnel_wide_export
+	lineageTag: a24d8e00-0fde-4ecc-98f8-bd0302baf149
+
+	column session_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 0b4a96e5-459d-4def-beb7-4cee81a30871
+		summarizeBy: sum
+		sourceColumn: session_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 99cbcc28-dfe2-4ff1-b0fd-402f3e348a4e
+		summarizeBy: sum
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column traffic_source
+		dataType: string
+		lineageTag: cd7bb98d-fbb3-4e74-9a4f-30c1dda3e8a4
+		summarizeBy: none
+		sourceColumn: traffic_source
+
+		annotation SummarizationSetBy = Automatic
+
+	column device_type
+		dataType: string
+		lineageTag: 3e524d5a-ad81-4443-9cd2-bfdb9879bb24
+		summarizeBy: none
+		sourceColumn: device_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column experiment_group
+		dataType: string
+		lineageTag: 18a9b8b0-4404-4c16-b84d-8ca1222df1dc
+		summarizeBy: none
+		sourceColumn: experiment_group
+
+		annotation SummarizationSetBy = Automatic
+
+	column campaign_id
+		dataType: int64
+		formatString: 0
+		lineageTag: db195308-8d86-47d9-a0cc-0e0fe30de664
+		summarizeBy: sum
+		sourceColumn: campaign_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_duration_sec
+		dataType: double
+		lineageTag: cefa5a34-fa5a-4d1c-8f7e-17091dea7ecb
+		summarizeBy: sum
+		sourceColumn: total_duration_sec
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column event_count
+		dataType: int64
+		formatString: 0
+		lineageTag: 1575133e-2404-48a9-8bf8-aa298ce9fd5d
+		summarizeBy: sum
+		sourceColumn: event_count
+
+		annotation SummarizationSetBy = Automatic
+
+	column session_start
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: ecddf305-ca9b-4425-a0af-fa95e4970d35
+		summarizeBy: none
+		sourceColumn: session_start
+
+		variation 变体
+			isDefault
+			relationship: b8df4b2f-517e-4a4d-b58f-31637cab5947
+			defaultHierarchy: LocalDateTable_4ac0f738-8658-4156-83e4-28dd43820a35.日期层次结构
+
+		annotation SummarizationSetBy = Automatic
+
+	column session_end
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 4d3ca9c2-cd92-4c6a-841b-789091710521
+		summarizeBy: none
+		sourceColumn: session_end
+
+		variation 变体
+			isDefault
+			relationship: 9367e249-7ab2-480d-b56f-20b24ca55acb
+			defaultHierarchy: LocalDateTable_a72cd027-42a9-4de1-a6c1-a249ab65e58d.日期层次结构
+
+		annotation SummarizationSetBy = Automatic
+
+	column hour
+		dataType: int64
+		formatString: 0
+		lineageTag: 190f7f95-9c2a-4702-abfa-62c434be94db
+		summarizeBy: sum
+		sourceColumn: hour
+
+		annotation SummarizationSetBy = Automatic
+
+	column weekday
+		dataType: int64
+		formatString: 0
+		lineageTag: 62b8e635-acdb-4bab-8aa9-275e06c7bcee
+		summarizeBy: sum
+		sourceColumn: weekday
+
+		annotation SummarizationSetBy = Automatic
+
+	column date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 0e098a20-d5e2-4011-988d-5cea99210bd5
+		summarizeBy: none
+		sourceColumn: date
+
+		variation 变体
+			isDefault
+			relationship: 066032c5-83ef-4e95-98d7-00f2165649ba
+			defaultHierarchy: LocalDateTable_7850d97f-3f1a-4124-9985-a7de79d0cfcb.日期层次结构
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column year
+		dataType: int64
+		formatString: 0
+		lineageTag: 6f514dfe-c604-4ffd-8661-ec9a47f571f4
+		summarizeBy: sum
+		sourceColumn: year
+
+		annotation SummarizationSetBy = Automatic
+
+	column month
+		dataType: int64
+		formatString: 0
+		lineageTag: c2a2b950-c370-4eec-a1d4-166339e0816a
+		summarizeBy: sum
+		sourceColumn: month
+
+		annotation SummarizationSetBy = Automatic
+
+	column country
+		dataType: string
+		lineageTag: 6f19d9f2-b3c9-4ef9-93ac-da60d321d59c
+		summarizeBy: none
+		sourceColumn: country
+
+		annotation SummarizationSetBy = Automatic
+
+	column age
+		dataType: int64
+		formatString: 0
+		lineageTag: 4be457b7-f91d-4076-8ed8-8cd9975a2672
+		summarizeBy: sum
+		sourceColumn: age
+
+		annotation SummarizationSetBy = Automatic
+
+	column gender
+		dataType: string
+		lineageTag: b90a3858-8c3b-4aad-9fb0-72a42c023822
+		summarizeBy: none
+		sourceColumn: gender
+
+		annotation SummarizationSetBy = Automatic
+
+	column loyalty_tier
+		dataType: string
+		lineageTag: 85bced19-918c-4e0d-80b9-ecafc5762309
+		summarizeBy: none
+		sourceColumn: loyalty_tier
+
+		annotation SummarizationSetBy = Automatic
+
+	column acquisition_channel
+		dataType: string
+		lineageTag: dce51a3b-88c4-423c-a85f-23ae8886b144
+		summarizeBy: none
+		sourceColumn: acquisition_channel
+
+		annotation SummarizationSetBy = Automatic
+
+	column signup_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: c4a12158-49ae-488e-8a6d-2ec3722e135d
+		summarizeBy: none
+		sourceColumn: signup_date
+
+		variation 变体
+			isDefault
+			relationship: 14dfe378-c69b-4bad-b718-a30b8725880b
+			defaultHierarchy: LocalDateTable_c2949045-e10f-4d5b-84e3-9efca589953e.日期层次结构
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column step1_home
+		dataType: int64
+		formatString: 0
+		lineageTag: 1aae6674-aefd-4b7f-a622-65bcf64c2333
+		summarizeBy: sum
+		sourceColumn: step1_home
+
+		annotation SummarizationSetBy = Automatic
+
+	column step2_plp
+		dataType: int64
+		formatString: 0
+		lineageTag: defe5424-b0ba-4fd4-8e4c-5a70440960fc
+		summarizeBy: sum
+		sourceColumn: step2_plp
+
+		annotation SummarizationSetBy = Automatic
+
+	column step3_pdp
+		dataType: int64
+		formatString: 0
+		lineageTag: ae4e4a5f-2e69-403f-8906-c81273f6aba4
+		summarizeBy: sum
+		sourceColumn: step3_pdp
+
+		annotation SummarizationSetBy = Automatic
+
+	column step4_cart
+		dataType: int64
+		formatString: 0
+		lineageTag: 74407d49-7db2-477b-afcd-e833336a2e96
+		summarizeBy: sum
+		sourceColumn: step4_cart
+
+		annotation SummarizationSetBy = Automatic
+
+	column step5_checkout
+		dataType: int64
+		formatString: 0
+		lineageTag: 69d96dcc-474b-47de-b45e-df5fe078ff96
+		summarizeBy: sum
+		sourceColumn: step5_checkout
+
+		annotation SummarizationSetBy = Automatic
+
+	column step_view
+		dataType: int64
+		formatString: 0
+		lineageTag: 41a3c648-19a9-4489-8a9c-d0c492cc6347
+		summarizeBy: sum
+		sourceColumn: step_view
+
+		annotation SummarizationSetBy = Automatic
+
+	column step_click
+		dataType: int64
+		formatString: 0
+		lineageTag: 4fa8bdfb-a0fb-4600-956e-be239f6a8186
+		summarizeBy: sum
+		sourceColumn: step_click
+
+		annotation SummarizationSetBy = Automatic
+
+	column step_add_cart
+		dataType: int64
+		formatString: 0
+		lineageTag: 3a7f38c4-97e5-4203-89b1-403e533540a8
+		summarizeBy: sum
+		sourceColumn: step_add_cart
+
+		annotation SummarizationSetBy = Automatic
+
+	column step_purchase
+		dataType: int64
+		formatString: 0
+		lineageTag: c710dfd9-aaaf-49d2-9682-7f5b8dadd893
+		summarizeBy: sum
+		sourceColumn: step_purchase
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_bounced
+		dataType: int64
+		formatString: 0
+		lineageTag: 9d9110e2-959d-4b9c-b526-dab1f547c4a4
+		summarizeBy: sum
+		sourceColumn: is_bounced
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_revenue
+		dataType: double
+		lineageTag: 261c8446-e573-463a-8fc4-ed9d30c02e3f
+		summarizeBy: sum
+		sourceColumn: total_revenue
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_transactions
+		dataType: int64
+		formatString: 0
+		lineageTag: de80d942-4e5f-4fa3-974a-28b98d518b05
+		summarizeBy: sum
+		sourceColumn: total_transactions
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_discount
+		dataType: int64
+		formatString: 0
+		lineageTag: 74328600-19a8-4a37-af37-b2d43838f118
+		summarizeBy: sum
+		sourceColumn: total_discount
+
+		annotation SummarizationSetBy = Automatic
+
+	column has_refund
+		dataType: int64
+		formatString: 0
+		lineageTag: 24d59633-db5f-4f6f-9ad7-19f33ad0de1f
+		summarizeBy: sum
+		sourceColumn: has_refund
+
+		annotation SummarizationSetBy = Automatic
+
+	column refund_count
+		dataType: int64
+		formatString: 0
+		lineageTag: 2d2bbb66-7b77-4e9f-840b-813571af97e7
+		summarizeBy: sum
+		sourceColumn: refund_count
+
+		annotation SummarizationSetBy = Automatic
+
+	column first_purchase_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 560684c6-e6d2-4d31-8e57-15d22e164db2
+		summarizeBy: none
+		sourceColumn: first_purchase_date
+
+		variation 变体
+			isDefault
+			relationship: 5c28a575-7d65-4df7-81b7-3ab5631077ce
+			defaultHierarchy: LocalDateTable_74df79b9-ac68-421b-a5f1-801cf21beadd.日期层次结构
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_purchased
+		dataType: int64
+		formatString: 0
+		lineageTag: 3221aeae-64a3-4e26-98e1-ee856c503ced
+		summarizeBy: sum
+		sourceColumn: is_purchased
+
+		annotation SummarizationSetBy = Automatic
+
+	partition funnel_wide_export = m
+		mode: import
+		source =
+				let
+				    源 = Csv.Document(File.Contents("D:\D30360\Documents\ecommerce_funnel_analysis\powerbi\data\funnel_wide_export.csv"),[Delimiter=",", Columns=38, Encoding=65001, QuoteStyle=QuoteStyle.None]),
+				    提升的标题 = Table.PromoteHeaders(源, [PromoteAllScalars=true]),
+				    更改的类型 = Table.TransformColumnTypes(提升的标题,{{"session_id", Int64.Type}, {"customer_id", Int64.Type}, {"traffic_source", type text}, {"device_type", type text}, {"experiment_group", type text}, {"campaign_id", Int64.Type}, {"total_duration_sec", type number}, {"event_count", Int64.Type}, {"session_start", type datetime}, {"session_end", type datetime}, {"hour", Int64.Type}, {"weekday", Int64.Type}, {"date", type date}, {"year", Int64.Type}, {"month", Int64.Type}, {"country", type text}, {"age", Int64.Type}, {"gender", type text}, {"loyalty_tier", type text}, {"acquisition_channel", type text}, {"signup_date", type date}, {"step1_home", Int64.Type}, {"step2_plp", Int64.Type}, {"step3_pdp", Int64.Type}, {"step4_cart", Int64.Type}, {"step5_checkout", Int64.Type}, {"step_view", Int64.Type}, {"step_click", Int64.Type}, {"step_add_cart", Int64.Type}, {"step_purchase", Int64.Type}, {"is_bounced", Int64.Type}, {"total_revenue", type number}, {"total_transactions", Int64.Type}, {"total_discount", Int64.Type}, {"has_refund", Int64.Type}, {"refund_count", Int64.Type}, {"first_purchase_date", type datetime}, {"is_purchased", Int64.Type}})
+				in
+				    更改的类型
+
+	annotation PBI_ResultType = Table
+

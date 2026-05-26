@@ -1,0 +1,51 @@
+table country_analysis
+	lineageTag: ef5ab8a6-50b7-446d-a904-68644ebb49a4
+
+	column country
+		dataType: string
+		lineageTag: ff02589e-b3fe-41ef-98fb-79f34f6dea78
+		summarizeBy: none
+		sourceColumn: country
+
+		annotation SummarizationSetBy = Automatic
+
+	column sessions
+		dataType: int64
+		formatString: 0
+		lineageTag: 39dc4266-df94-49fb-8225-9f61761d5072
+		summarizeBy: sum
+		sourceColumn: sessions
+
+		annotation SummarizationSetBy = Automatic
+
+	column purchases
+		dataType: int64
+		formatString: 0
+		lineageTag: 1a92e851-139b-4b4f-9531-b615e13d68ff
+		summarizeBy: sum
+		sourceColumn: purchases
+
+		annotation SummarizationSetBy = Automatic
+
+	column conversion_rate
+		dataType: double
+		lineageTag: bc8240b4-661e-4fb1-8f82-38f1942d4798
+		summarizeBy: sum
+		sourceColumn: conversion_rate
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition country_analysis = m
+		mode: import
+		source =
+				let
+				    源 = Csv.Document(File.Contents("D:\D30360\Documents\ecommerce_funnel_analysis\powerbi\data\country_analysis.csv"),[Delimiter=",", Columns=4, Encoding=65001, QuoteStyle=QuoteStyle.None]),
+				    提升的标题 = Table.PromoteHeaders(源, [PromoteAllScalars=true]),
+				    更改的类型 = Table.TransformColumnTypes(提升的标题,{{"country", type text}, {"sessions", Int64.Type}, {"purchases", Int64.Type}, {"conversion_rate", type number}})
+				in
+				    更改的类型
+
+	annotation PBI_ResultType = Table
+

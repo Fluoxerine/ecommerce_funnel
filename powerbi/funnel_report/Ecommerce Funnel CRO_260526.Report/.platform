@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "Ecommerce Funnel CRO_260526"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "581325ba-d657-45d0-b064-a4b64c61b689"
+  }
+}

@@ -1,6 +1,6 @@
 # 数据字典
 
-> 数据集：E-Commerce Transactions + Clickstream | 5 表, 41 字段, 2.2M+ 条记录
+> 代码版本：2026-05-26 | 数据集：模拟数据 | 5 表, 41 字段, 2.2M+ 条记录
 
 ---
 
@@ -19,7 +19,6 @@
 | `campaign_id` | INT | 广告活动 ID (关联 campaigns) | 1-50 |
 | `page_category` | STRING | 页面类型 | Home / PLP / PDP / Cart / Checkout |
 | `session_duration_sec` | FLOAT | 会话时长(秒) | 0.1-7533.8 |
-| `experiment_group` | STRING | A/B 实验分组 | Control / Variant_A / Variant_B |
 
 **事件分布**: view(1,043,573) > click(379,008) > add_to_cart(284,370) > bounce(189,922) > purchase(103,127)
 

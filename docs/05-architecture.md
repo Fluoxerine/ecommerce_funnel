@@ -1,5 +1,7 @@
 # 项目架构
 
+> 代码版本：python/funnel_analysis.py | 生成日期：2026-05-26
+
 ## 一、模块依赖与数据流
 
 ```
@@ -17,8 +19,8 @@
         └─────────┬───────────┘                         │ compute_pie_priority()
                   │                                     │ compute_churn_features()
                   │                                     │ statistical_tests()
-           visualization.py                             │ compute_ab_test_analysis()
-           (12 张图表)                                   │ save_baseline()
+           visualization.py                             │ save_baseline()
+           (11 张图表)                                   │
                   │                                     │
                   │                                     │
                   └──────────────┬──────────────────────┘
@@ -62,7 +64,6 @@ campaigns.csv        ──→  data_cleaning.build_funnel_wide()     ──→ 
 - session_duration 异常值过滤 (1s-7200s)
 - event_type 白名单校验
 - 会话级属性聚合 (customer_id, device, traffic_source, experiment_group)
-- 用户级实验分组修正
 - 漏斗宽表构建 (9 个 step 列 + 交易信息)
 - 漏斗逻辑校验 (purchase→checkout)
 
@@ -78,12 +79,12 @@ campaigns.csv        ──→  data_cleaning.build_funnel_wide()     ──→ 
 | 统计检验 | `statistical_tests` | 卡方 + Bonferroni |
 | 策略输出 | `save_baseline` / `generate_strategy_brief` | 基准快照 + 策略摘要 |
 
-### visualization.py — 图表层 (12 张)
+### visualization.py — 图表层 (11 张)
 
 | # | 图表 | 类型 | 说明 |
 |:---:|:---|:---|:---|
-| 1 | 页面级漏斗 | Plotly Funnel | 交叉引用转化率 |
-| 2 | 行为级漏斗 | Plotly Funnel | 浏览→点击→加购→购买 |
+| 1 | 页面级漏斗 | Matplotlib Barh | 交叉引用转化率 |
+| 2 | 行为级漏斗 | Matplotlib Barh | 浏览→点击→加购→购买 |
 | 3 | 渠道漏斗对比 | Matplotlib Barh | Top 3 渠道 |
 | 4 | 损失瀑布图 | Matplotlib Bar | 各环节年度损失 |
 | 5 | 渠道×设备热力图 | Matplotlib Imshow | 转化率交叉矩阵 |
@@ -92,8 +93,7 @@ campaigns.csv        ──→  data_cleaning.build_funnel_wide()     ──→ 
 | 8 | 停留时长 vs 转化率 | Matplotlib Bar+Line | GA4 行为分桶 |
 | 9 | 渠道流失率 | Matplotlib Barh | 渠道×环节矩阵 |
 | 10 | PIE 矩阵 | Matplotlib Scatter | 气泡大小=PIE 得分 |
-| 11 | A/B 实验对比 | Matplotlib Bar | 分组转化率 + lift |
-| 12 | 品类漏斗 | Matplotlib Grouped Bar | 浏览→加购→购买 |
+| 11 | 品类漏斗 | Matplotlib Grouped Bar | 浏览→加购→购买 |
 
 ### import_to_mysql.py — 数据导出层
 - 5 步流程：(1) 建表 → (2) 导入 MySQL → (3) 执行 SQL 分析 → (4) 验证 → (5) 导出 Power BI CSV
@@ -106,7 +106,7 @@ campaigns.csv        ──→  data_cleaning.build_funnel_wide()     ──→ 
 | 01_setup_database.sql | DDL 建表 (5 表 + 索引) | — |
 | 02_load_data.sql | LOAD DATA INFILE 导入 | 01 |
 | 03_funnel_overview.sql | 页面级 + 行为级漏斗 | 01 |
-| 04_multi_dimension.sql | 渠道/设备/实验/国家/忠诚度 | 01 |
+| 04_multi_dimension.sql | 渠道/设备/国家/忠诚度 | 01 |
 | 05_churn_diagnostics.sql | 流失特征 + 渠道×环节交叉 | 01 |
 | 06_statistical_tests.sql | 卡方检验底表 | 01 |
 | 07_loss_quantification.sql | 退款损失 + ROAS + 品类 PIE | 01 |
@@ -126,7 +126,6 @@ campaigns.csv        ──→  data_cleaning.build_funnel_wide()     ──→ 
 | 页面漏斗用交叉引用而非简单排序 | 处理多入口（深链）场景，PLP 会话 > Home 会话 |
 | 损失计算用转化用户实际客单价 | 避免虚构权重（0.3/0.5/0.8/1.0），数据驱动 |
 | 流失会话级联去重 | 防止同一会话在多个环节被重复计数 |
-| A/B 分组按用户级 mode 聚合 | 事件级 `.first()` 随机性太大，用户级才是真实随机化单元 |
 | 品类浏览加 event_type==view 过滤 | 之前浏览会话包含了 purchase/click，严重高估 |
 | 双转化率口径 | 会话转化率(15.08%) 和浏览转化率(18.13%) 分母不同，分开标注 |
 | 固定时长分桶（非等频） | 固定阈值可跨周期对比，等频分桶边界随时间漂移 |

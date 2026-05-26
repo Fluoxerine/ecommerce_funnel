@@ -38,3 +38,12 @@ Thumbs.db
 .claude/
 .pbi/
 diagramLayout.json
+
+# OpenClaw agent files
+AGENTS.md
+TOOLS.md
+SOUL.md
+IDENTITY.md
+USER.md
+HEARTBEAT.md
+.openclaw/

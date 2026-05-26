@@ -33,7 +33,7 @@
 | V3 | 深链流量占 54.9% PLP 但缺乏分析 | 新增深链分析模块（路径分类 + 分渠道对比） |
 | V4 | 需要进一步分层 | 新增新用户 vs 老用户漏斗、周末 vs 工作日对比 |
 
-这个迭代过程（完整记录在 [docs/06-funnel-critique-and-refinement.md](06-funnel-critique-and-refinement.md)）本身就是分析能力的证明——不是"画一个漏斗图就结束"，而是真正思考了多入口、非线性路径这些电商真实场景。
+这个迭代过程（完整记录在 [2026-05-20-funnel-critique.md](2026-05-20-funnel-critique.md)）本身就是分析能力的证明——不是"画一个漏斗图就结束"，而是真正思考了多入口、非线性路径这些电商真实场景。
 
 最终形成了三套互补的漏斗体系：
 
@@ -45,11 +45,11 @@
 
 | 方法 | 代码位置 | 评价 |
 |:---|:---|:---|
-| Welch's t-test + Cohen's d | [funnel_analysis.py:608-643](python/funnel_analysis.py#L608-L643) | Welch 不假设方差齐性，Cohen's d 避免大样本 p-hacking。正确 |
-| 卡方独立性检验 + Bonferroni 校正 | [funnel_analysis.py:784-803](python/funnel_analysis.py#L784-L803) | 4 个维度 → α=0.0125。正确 |
-| Shift-Share 归因分解 | [funnel_analysis.py:807-888](python/funnel_analysis.py#L807-L888) | 结构效应 vs 质量效应分解。合理 |
-| PIE 优先级矩阵 | [funnel_analysis.py:749-777](python/funnel_analysis.py#L749-L777) | WiderFunnel 方法论，行业标准 |
-| GA4 行为阈值分桶 | [config.py:72-78](python/config.py#L72-L78) | 固定阈值比等频分桶更适合跨周期对比 |
+| Welch's t-test + Cohen's d | [funnel_analysis.py:608-643](../../python/funnel_analysis.py#L608-L643) | Welch 不假设方差齐性，Cohen's d 避免大样本 p-hacking。正确 |
+| 卡方独立性检验 + Bonferroni 校正 | [funnel_analysis.py:784-803](../../python/funnel_analysis.py#L784-L803) | 4 个维度 → α=0.0125。正确 |
+| Shift-Share 归因分解 | [funnel_analysis.py:807-888](../../python/funnel_analysis.py#L807-L888) | 结构效应 vs 质量效应分解。合理 |
+| PIE 优先级矩阵 | [funnel_analysis.py:749-777](../../python/funnel_analysis.py#L749-L777) | WiderFunnel 方法论，行业标准 |
+| GA4 行为阈值分桶 | [config.py:72-78](../../python/config.py#L72-L78) | 固定阈值比等频分桶更适合跨周期对比 |
 
 方法选择合理，没有为了炫技而滥用复杂模型。
 
@@ -59,15 +59,14 @@
 数据探查 → 漏斗建模 → 多维诊断 → 流失根因 → 损失量化 → 策略闭环
 ```
 
-每一阶段都有对应的代码函数、日志输出、可视化图表。PIE 优先级矩阵、策略摘要自动生成（[funnel_analysis.py:1009-1045](python/funnel_analysis.py#L1009-L1045)）、基准快照（[funnel_analysis.py:977-1006](python/funnel_analysis.py#L977-L1006)）都体现了"分析要能落地"的意识。
+每一阶段都有对应的代码函数、日志输出、可视化图表。PIE 优先级矩阵、策略摘要自动生成（[funnel_analysis.py:1009-1045](../../python/funnel_analysis.py#L1009-L1045)）、基准快照（[funnel_analysis.py:977-1006](../../python/funnel_analysis.py#L977-L1006)）都体现了"分析要能落地"的意识。
 
 #### 自我审查与持续改进
 
-[docs/05-review-findings.md](05-review-findings.md) 是一份质量很高的代码审查文档——P0-P3 分类、具体的修复代码、验证命令都有。从 git 记录可以看到，审查中发现的以下问题已经被修复：
+[2026-05-18-review-findings.md](2026-05-18-review-findings.md) 是一份质量很高的代码审查文档——P0-P3 分类、具体的修复代码、验证命令都有。从 git 记录可以看到，审查中发现的以下问题已经被修复：
 
 - 测试代码重写（匹配当前 API 和数据模型）
 - 流失会话级联去重（解决 704K > 633K 的逻辑错误）
-- A/B 实验分组改为用户级 mode 聚合
 - `total_revenue` 不再静默取绝对值
 - 品类漏斗 view 计数增加 event_type 过滤
 - 转化率改为双口径（会话转化率 + 浏览转化率）
@@ -92,7 +91,7 @@
 
 **建议修复**：
 
-在 [docs/04-results.md](04-results.md) 的"十二、月度趋势"部分增加一个明确的数据完整性警示：
+在 [04-results.md](../04-results.md) 的"十二、月度趋势"部分增加一个明确的数据完整性警示：
 
 > **数据完整性警示**：2022 年和 2023 年的会话量分别仅为 2021 年的 37% 和 13%。转化率下降趋势可能部分或全部由数据不完整/采样偏差导致。Shift-Share 归因分解作为方法演示，在数据完整性验证前不应作为确定性业务结论。
 
@@ -114,7 +113,7 @@ for y in years[1:]:
 
 #### P0 — 损失金额计算的客单价基准有问题
 
-**问题位置**：[python/funnel_analysis.py:687-689](python/funnel_analysis.py#L687-L689)
+**问题位置**：[python/funnel_analysis.py:687-689](../../python/funnel_analysis.py#L687-L689)
 
 ```python
 purchased = funnel_wide[funnel_wide['step_purchase'] == 1]
@@ -122,7 +121,7 @@ purchased_revenue = purchased[['customer_id', 'total_revenue']].drop_duplicates(
 aov = purchased_revenue['total_revenue'].mean()
 ```
 
-`total_revenue` 在宽表中是客户级累计值（在 [data_cleaning.py:173-179](python/data_cleaning.py#L173-L179) 中按 customer_id sum 聚合）。一个购买了 5 次、每次 ¥100 的客户，其 `total_revenue = ¥500`，会被当作"一个流失用户 = ¥500 潜在损失"。
+`total_revenue` 在宽表中是客户级累计值（在 [data_cleaning.py:173-179](../../python/data_cleaning.py#L173-L179) 中按 customer_id sum 聚合）。一个购买了 5 次、每次 ¥100 的客户，其 `total_revenue = ¥500`，会被当作"一个流失用户 = ¥500 潜在损失"。
 
 这导致 AOV 被高估约 N 倍（N ≈ 人均购买次数）。对于本项目，这直接导致：
 - 年估算损失 ¥59,760,920 被高估
@@ -166,7 +165,7 @@ def compute_loss_amount(funnel_wide: pd.DataFrame,
 
 #### P1 — 渠道瓶颈分析中"瓶颈"的定义混淆
 
-**问题位置**：[docs/04-results.md](docs/04-results.md) 第 102-112 行，以及 [python/funnel_analysis.py:263-292](python/funnel_analysis.py#L263-L292)
+**问题位置**：[04-results.md](../04-results.md) 第 102-112 行，以及 [python/funnel_analysis.py:263-292](../../python/funnel_analysis.py#L263-L292)
 
 当前 `compute_channel_funnels` 通过找 `上一阶段转化率(%)` 的最小值来确定瓶颈：
 
@@ -207,13 +206,13 @@ logger.info("  %s: 转化率瓶颈=%s (%.2f%%), 绝对流失瓶颈=%s (%s 会话
 
 #### P1 — 流失特征分析存在部分循环论证
 
-**问题位置**：[python/funnel_analysis.py:606-643](python/funnel_analysis.py#L606-L643)
+**问题位置**：[python/funnel_analysis.py:606-643](../../python/funnel_analysis.py#L606-L643)
 
 用 `event_count` 和 `total_duration_sec` 对比"流失组 vs 转化组"，结论是"事件数差异大（d=-0.74），转化用户互动更深"。
 
 但"转化"的定义就是完成了更多漏斗步骤——完成更多步骤天然产生更多事件和更长停留时间。这是一定程度的同义反复（tautology），不提供真正的诊断价值。事件数差异是"转化更多的自然结果"，而不是"转化的驱动因素"。
 
-[docs/05-review-findings.md](05-review-findings.md) 第 282-294 行已经指出了这个问题，并建议了替代特征（加购前浏览品类数、是否使用搜索、同一商品重复查看次数等），但这些替代特征受限于数据集字段未能实现。
+[2026-05-18-review-findings.md](2026-05-18-review-findings.md) 第 282-294 行已经指出了这个问题，并建议了替代特征（加购前浏览品类数、是否使用搜索、同一商品重复查看次数等），但这些替代特征受限于数据集字段未能实现。
 
 **建议**：
 
@@ -227,7 +226,7 @@ logger.info("  %s: 转化率瓶颈=%s (%.2f%%), 绝对流失瓶颈=%s (%s 会话
 
 #### P2 — 品类分析的"浏览会话"被系统性低估
 
-**问题位置**：[python/funnel_analysis.py:471-509](python/funnel_analysis.py#L471-L509)
+**问题位置**：[python/funnel_analysis.py:471-509](../../python/funnel_analysis.py#L471-L509)
 
 品类分析通过 `events['product_id'].notna()` 过滤后关联 products 表获取 category。但大量浏览事件（首页浏览、PLP 列表页浏览、搜索结果页浏览等）没有 product_id。这意味着：
 
@@ -254,7 +253,7 @@ view_by_cat = (
 
 #### P2 — Bounce 事件数据质量问题未在输出中体现
 
-**数据验证**（[docs/06-funnel-critique-and-refinement.md](06-funnel-critique-and-refinement.md) 第 229-255 行）：
+**数据验证**（[2026-05-20-funnel-critique.md](2026-05-20-funnel-critique.md) 第 229-255 行）：
 
 | 指标 | 观察值 | 真实电商预期 |
 |:---|:---|:---|
@@ -265,7 +264,7 @@ view_by_cat = (
 
 结论很明确：这个数据集中的 bounce 事件更像是随机标记，而非真实行为信号。
 
-**但**：[sql/08_operational_export.sql:44-48](sql/08_operational_export.sql#L44-L48) 仍在计算 Bounce Rate 作为监控 KPI，与内部结论矛盾。
+**但**：[sql/08_operational_export.sql:44-48](../../sql/08_operational_export.sql#L44-L48) 仍在计算 Bounce Rate 作为监控 KPI，与内部结论矛盾。
 
 **建议**：从监控 KPI 中移除 Bounce Rate，或增加注释说明数据质量问题。
 
@@ -526,7 +525,7 @@ R (Result):
 - 日志同时输出到控制台和文件
 
 小问题：
-- `DURATION_BINS` 和 `DURATION_LABELS` 的注释写的是"GA4 行业标准"，但 GA4 的 engaged session 阈值是 10 秒或 1 次 conversion/2+ pageviews。60/180/420 更像是自定义分桶。已在 [docs/05-review-findings.md](05-review-findings.md) 中指出并修复。
+- `DURATION_BINS` 和 `DURATION_LABELS` 的注释写的是"GA4 行业标准"，但 GA4 的 engaged session 阈值是 10 秒或 1 次 conversion/2+ pageviews。60/180/420 更像是自定义分桶。已在 [2026-05-18-review-findings.md](2026-05-18-review-findings.md) 中指出并修复。
 - `CRO_BENCHMARKS` 和 `STRATEGY_ROI` 中的数字无来源引用。建议注明数据来源或标注为估算值。
 
 ---
@@ -542,7 +541,7 @@ R (Result):
 
 小问题：
 - 日志输出和 return 语句交织——建议将日志输出与数据返回分离，方便测试
-- `traffic_source` 在 load 时做了 `.str.title()` 标准化，但在 cleaning 中又做了一次（[data_cleaning.py:55-58](python/data_cleaning.py#L55-L58)）。虽然不会出错，但重复了。两处保留一处即可。
+- `traffic_source` 在 load 时做了 `.str.title()` 标准化，但在 cleaning 中又做了一次（[data_cleaning.py:55-58](../../python/data_cleaning.py#L55-L58)）。虽然不会出错，但重复了。两处保留一处即可。
 
 ---
 
@@ -555,10 +554,10 @@ R (Result):
 - 每步有 before/after 日志对比，可追溯
 - `build_session_attributes` 使用 mode 聚合类别字段，比 first/last 更稳健
 - `build_funnel_wide` 对"购买但无 checkout"做了校验日志
-- 用户级 experiment_group 聚合（[data_cleaning.py:107-115](python/data_cleaning.py#L107-L115)）已修复
+- 用户级 experiment_group 聚合（[data_cleaning.py:107-115](../../python/data_cleaning.py#L107-L115)）已修复
 
 潜在问题：
-- `build_funnel_wide` 中 transactions 的 `total_revenue` 为客户级 sum（[data_cleaning.py:173-179](python/data_cleaning.py#L173-L179)），这个设计选择会影响后续所有使用该字段的计算（见上文 P0 问题）
+- `build_funnel_wide` 中 transactions 的 `total_revenue` 为客户级 sum（[data_cleaning.py:173-179](../../python/data_cleaning.py#L173-L179)），这个设计选择会影响后续所有使用该字段的计算（见上文 P0 问题）
 - 对 broken transactions（缺失 product_id/revenue）的处理：先用 valid_txn 做 revenue 聚合，再用 all_purchasers 补充 transaction 计数。逻辑正确但嵌套了两层 merge，可读性一般
 
 ---
@@ -579,7 +578,7 @@ R (Result):
 
 小问题：
 - `compute_churn_features` 的流失特征选择存在循环论证（见上文 P1 问题）
-- `compute_pie_priority` 的 Ease 评分硬编码（[funnel_analysis.py:762-768](python/funnel_analysis.py#L762-L768)），无数据支持
+- `compute_pie_priority` 的 Ease 评分硬编码（[funnel_analysis.py:762-768](../../python/funnel_analysis.py#L762-L768)），无数据支持
 - `compute_channel_funnels` 返回 `dict[str, pd.DataFrame]`，类型不一致（其他分析函数返回 DataFrame）
 - `generate_strategy_brief` 的阈值判断过于简化（CR peak hour 建议"此时段加大投放"），缺少预算约束和边际效益考虑
 
@@ -598,7 +597,6 @@ R (Result):
 小问题：
 - `_save` 函数同时处理 matplotlib 和 plotly，但耦合在一个函数里。建议分成 `_save_mpl` 和 `_save_plotly`
 - 16 张图全部在 main.py 中顺序调用，如果某个图出错会中断后续所有图的生成。建议用 try/except 包裹单个图
-- `plot_ab_test` 的标题硬编码了"Control 占 97.8% 样本"（[visualization.py:567](python/visualization.py#L567)），如果数据变化图表注释会过时
 
 ---
 
@@ -653,12 +651,12 @@ R (Result):
 
 优点：
 - 8 篇文档覆盖了从背景到方法的全部内容
-- [docs/04-results.md](04-results.md) 有 20 个分析章节、清晰的表格、核心结论
-- [docs/05-review-findings.md](05-review-findings.md) 和 [docs/06-funnel-critique-and-refinement.md](06-funnel-critique-and-refinement.md) 展示了迭代改进过程
+- [04-results.md](../04-results.md) 有 20 个分析章节、清晰的表格、核心结论
+- [2026-05-18-review-findings.md](2026-05-18-review-findings.md) 和 [2026-05-20-funnel-critique.md](2026-05-20-funnel-critique.md) 展示了迭代改进过程
 - `两个漏斗图的问题.md` 和 `整体建议参考.md` 是外部反馈的完整记录
 
 小问题：
-- docs/05 有两个文件（`05-architecture.md` 和 `05-review-findings.md`），编号冲突
+- docs/05 有两个文件（`05-architecture.md` 和 `2026-05-18-review-findings.md`），编号冲突
 - 部分文档中的数字可能与最新代码运行结果不一致（修复后未重新运行验证）
 
 ---

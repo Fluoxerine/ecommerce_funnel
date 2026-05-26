@@ -125,3 +125,55 @@ def validate_data_integrity(tables: dict[str, pd.DataFrame]) -> list[str]:
         logger.info("数据完整性检查通过")
 
     return issues
+
+
+def data_quality_report(tables: dict[str, pd.DataFrame]) -> dict:
+    """数据质量独立报告 — 缺失率、异常值、唯一性、时间覆盖"""
+    logger.info("=" * 60)
+    logger.info("数据质量报告")
+    logger.info("=" * 60)
+    report = {}
+
+    for name, df in tables.items():
+        n = len(df)
+        if n == 0:
+            report[name] = {'rows': 0, 'issues': ['empty table']}
+            continue
+
+        missing = df.isnull().mean()
+        high_missing = {k: f'{v:.1%}' for k, v in missing.items() if v > 0.05}
+
+        # 关键列唯一性
+        uniq_info = {}
+        for col in df.columns:
+            if col.endswith('_id') or col == 'session_id':
+                uniq_info[col] = f'{df[col].nunique():,} unique / {n:,} rows'
+
+        # 时间范围
+        time_cols = [c for c in df.columns if 'time' in c.lower() or 'date' in c.lower()]
+        time_range = {}
+        for tc in time_cols:
+            if pd.api.types.is_datetime64_any_dtype(df[tc]):
+                time_range[tc] = f'{df[tc].min().date()} ~ {df[tc].max().date()}'
+
+        report[name] = {
+            'rows': n,
+            'columns': len(df.columns),
+            'high_missing_pct': high_missing,
+            'uniqueness': uniq_info,
+            'time_range': time_range,
+        }
+
+        missing_str = ', '.join(f'{k}={v}' for k, v in high_missing.items()) if high_missing else 'none'
+        logger.info("  %s: %s rows, %s cols, missing>5%%: %s",
+                    name, f'{n:,}', len(df.columns), missing_str)
+
+    # 跨表关联完整性
+    e_cust = set(tables['events']['customer_id'].unique())
+    t_cust = set(tables['transactions']['customer_id'].unique())
+    logger.info("  跨表: events %s customers, transactions %s customers",
+                f'{len(e_cust):,}', f'{len(t_cust):,}')
+    logger.info("  transactions 中 %.1f%% 客户在 events 中有记录",
+                len(t_cust & e_cust) / len(t_cust) * 100 if t_cust else 0)
+
+    return report

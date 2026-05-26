@@ -68,7 +68,7 @@ MIN_SESSION_DURATION = 1           # 最低会话时长 (秒)
 MAX_SESSION_DURATION = 7200        # 最高会话时长 (2小时)
 MAX_SINGLE_PAGE_DURATION = 3600    # 最长单页时长
 
-# ── 时长分桶（GA4 行业标准） ───────────────────────────
+# ── 时长分桶（行为分析常用阈值） ───────────────────────────
 DURATION_BINS = [0, 60, 180, 420, float('inf')]
 DURATION_LABELS = [
     '快速跳出 (<60s)',

@@ -15,6 +15,23 @@ from python.config import (
 )
 
 
+def _compute_page_coverage(df, steps, labels):
+    """页面覆盖分析 — 交叉到达率：同时到达前后两页 / 到达前页"""
+    counts = [int(df[col].sum()) for col in steps]
+    rates = [100.0]
+    for i in range(1, len(steps)):
+        prev = counts[i - 1]
+        both = int(((df[steps[i - 1]] == 1) & (df[steps[i]] == 1)).sum())
+        rates.append(round(both / prev * 100, 2) if prev > 0 else 0.0)
+    funnel_df = pd.DataFrame({
+        '漏斗阶段': labels,
+        '到达会话数': counts,
+        '交叉到达率(%)': rates,
+    })
+    funnel_df['整体到达率(%)'] = (funnel_df['到达会话数'] / len(df) * 100).round(2)
+    return funnel_df
+
+
 # ═══════════════════════════════════════════════════════════════
 # 阶段 2: 漏斗建模拆解
 # ═══════════════════════════════════════════════════════════════
@@ -34,49 +51,17 @@ def compute_page_funnel(funnel_wide: pd.DataFrame) -> pd.DataFrame:
     logger.info("=" * 60)
     logger.info("注意: 这是页面覆盖统计, 非严格路径漏斗。下游页面可因深链流量超过上游。")
 
-    steps = PAGE_FUNNEL_COLS
-
-    # 各页面独立到达会话数
-    counts = [int(funnel_wide[col].sum()) for col in steps]
+    funnel_df = _compute_page_coverage(funnel_wide, PAGE_FUNNEL_COLS, PAGE_FUNNEL_ORDER)
 
     # 检测倒挂现象并警示
-    for i in range(1, len(steps)):
+    counts = funnel_df['到达会话数'].tolist()
+    for i in range(1, len(counts)):
         if counts[i] > counts[i - 1]:
             logger.info(
                 "  [深链警示] %s 到达 (%s) > %s 到达 (%s) — 存在直接落地该页面的深链流量",
                 PAGE_FUNNEL_ORDER[i], f"{counts[i]:,}",
                 PAGE_FUNNEL_ORDER[i - 1], f"{counts[i - 1]:,}",
             )
-
-    # 交叉引用：同时到达前后两个页面的会话数
-    overlap_counts = []
-    for i in range(len(steps) - 1):
-        both = int(
-            ((funnel_wide[steps[i]] == 1) & (funnel_wide[steps[i + 1]] == 1)).sum()
-        )
-        overlap_counts.append(both)
-
-    # 构建漏斗表
-    funnel_df = pd.DataFrame({
-        '漏斗阶段': PAGE_FUNNEL_ORDER,
-        '到达会话数': counts,
-    })
-
-    # 交叉到达率 = 同时到达前后两页 / 到达前页 (上限100%)
-    rates = []
-    for i in range(len(steps)):
-        if i == 0:
-            rates.append(100.0)
-        else:
-            prev = counts[i - 1]
-            both = overlap_counts[i - 1]
-            rate = min(round(both / prev * 100, 2), 100.0) if prev > 0 else 0.0
-            rates.append(rate)
-
-    # 整体：各页面在所有会话中的到达率（因多入口场景，首页不是必经之路）
-    total_sessions = len(funnel_wide)
-    funnel_df['交叉到达率(%)'] = rates
-    funnel_df['整体到达率(%)'] = (funnel_df['到达会话数'] / total_sessions * 100).round(2)
 
     for _, row in funnel_df.iterrows():
         logger.info("  %s: %s (交叉到达率 %.2f%% / 整体到达率 %.2f%%)",
@@ -405,22 +390,7 @@ def compute_new_vs_returning_funnel(
 
     # 页面漏斗对比
     for label, subset in [('新用户(未购买)', new_users), ('老用户(已购买)', returning_users)]:
-        counts = [int(subset[col].sum()) for col in steps]
-        rates = [100.0]
-        for i in range(1, len(steps)):
-            prev = counts[i - 1]
-            both = int(
-                ((subset[steps[i - 1]] == 1) & (subset[steps[i]] == 1)).sum()
-            )
-            rates.append(round(both / prev * 100, 2) if prev > 0 else 0.0)
-        funnel_df = pd.DataFrame({
-            '漏斗阶段': PAGE_FUNNEL_ORDER,
-            '到达会话数': counts,
-            '交叉到达率(%)': rates,
-        })
-        funnel_df['整体到达率(%)'] = (
-            funnel_df['到达会话数'] / len(subset) * 100
-        ).round(2)
+        funnel_df = _compute_page_coverage(subset, steps, PAGE_FUNNEL_ORDER)
         results[f'{label}_page'] = funnel_df
 
         churn_idx = funnel_df[1:]['交叉到达率(%)'].idxmin()
@@ -537,22 +507,41 @@ def compute_category_funnel(funnel_wide: pd.DataFrame,
     cat_stats = cat_stats.merge(purchase_by_cat, on='category', how='left')
     cat_stats[['加购会话', '购买会话']] = cat_stats[['加购会话', '购买会话']].fillna(0).astype(int)
 
+    # Wilson 95% CI for proportions — handles small-N categories
+    def _wilson_ci(success, n, z=1.96):
+        if n == 0:
+            return (0.0, 0.0)
+        p = success / n
+        denom = 1 + z**2 / n
+        center = (p + z**2 / (2 * n)) / denom
+        margin = z * np.sqrt((p * (1 - p) + z**2 / (4 * n)) / n) / denom
+        return (round(max(0, center - margin) * 100, 2),
+                round(min(1, center + margin) * 100, 2))
+
     cat_stats['浏览→加购(%)'] = (cat_stats['加购会话'] / cat_stats['浏览会话'] * 100).round(2)
     cat_stats['加购→购买(%)'] = (cat_stats['购买会话'] / cat_stats['加购会话'] * 100).round(2)
     cat_stats = cat_stats.sort_values('购买会话', ascending=False)
 
+    # 为加购→购买转化率添加 Wilson CI（影响最大的指标）
+    ci_data = [_wilson_ci(r['购买会话'], r['加购会话'])
+               for _, r in cat_stats.iterrows()]
+    cat_stats['购买CI_low'] = [c[0] for c in ci_data]
+    cat_stats['购买CI_high'] = [c[1] for c in ci_data]
+
     for _, row in cat_stats.iterrows():
-        logger.info("  %s: %s 浏览 → 加购 %.2f%% → 购买 %.2f%%",
+        logger.info("  %s: %s 浏览 → 加购 %.2f%% → 购买 %.2f%% [95%% CI: %.1f-%.1f%%]",
                     row['category'], f"{int(row['浏览会话']):,}",
-                    row['浏览→加购(%)'], row['加购→购买(%)'])
+                    row['浏览→加购(%)'], row['加购→购买(%)'],
+                    row['购买CI_low'], row['购买CI_high'])
 
     return cat_stats
 
 
 def compute_duration_analysis(funnel_wide: pd.DataFrame) -> pd.DataFrame:
-    """停留时长与转化率（GA4 行为阈值分桶）"""
+    """停留时长与转化率（行为分析常用阈值分桶）"""
     logger.info("--- 停留时长分析 ---")
 
+    funnel_wide = funnel_wide.copy()
     funnel_wide['时长分桶'] = pd.cut(
         funnel_wide['total_duration_sec'],
         bins=DURATION_BINS, labels=DURATION_LABELS,
@@ -574,6 +563,7 @@ def compute_time_of_day_analysis(funnel_wide: pd.DataFrame) -> tuple[pd.DataFram
     """时段分析 — 返回 (小时转化率, 星期几转化率)"""
     logger.info("--- 时段分析 ---")
 
+    funnel_wide = funnel_wide.copy()
     hourly = funnel_wide.groupby('hour').agg(
         会话数=('session_id', 'nunique'),
         转化率=('step_purchase', 'mean'),
@@ -674,11 +664,14 @@ def compute_churn_features(funnel_wide: pd.DataFrame) -> list[dict[str, str | fl
         na, nb = len(a), len(b)
         if na < 2 or nb < 2:
             return np.nan
-        pooled = np.sqrt(((na - 1) * a.std() ** 2 + (nb - 1) * b.std() ** 2) / (na + nb - 2))
+        pooled = np.sqrt(((na - 1) * a.std(ddof=1) ** 2 + (nb - 1) * b.std(ddof=1) ** 2) / (na + nb - 2))
         return (a.mean() - b.mean()) / pooled if pooled > 0 else np.nan
 
     features = ['total_duration_sec', 'event_count']
     results = []
+    n_tests = len(CHURN_STAGES) * len(features)  # 4 stages × 2 features = 8
+    bonferroni_alpha = 0.05 / n_tests  # Bonferroni 校正 α = 0.00625
+    logger.info("  Bonferroni 校正 α = %.5f (%d 次独立检验)", bonferroni_alpha, n_tests)
 
     for label, stage_col, next_col in CHURN_STAGES:
         lost = funnel_wide[(funnel_wide[stage_col] == 1) & (funnel_wide[next_col] == 0)]
@@ -687,7 +680,8 @@ def compute_churn_features(funnel_wide: pd.DataFrame) -> list[dict[str, str | fl
         for feat in features:
             t_stat, p_val = stats.ttest_ind(lost[feat], conv[feat], equal_var=False)
             d_val = cohens_d(lost[feat], conv[feat])
-            sig = '***' if p_val < 0.001 else '**' if p_val < 0.01 else '*' if p_val < 0.05 else 'ns'
+            sig_raw = '***' if p_val < 0.001 else '**' if p_val < 0.01 else '*' if p_val < 0.05 else 'ns'
+            sig_corrected = '*' if p_val < bonferroni_alpha else 'ns'
 
             results.append({
                 '流失环节': label,
@@ -695,12 +689,13 @@ def compute_churn_features(funnel_wide: pd.DataFrame) -> list[dict[str, str | fl
                 '流失组均值': round(lost[feat].mean(), 2),
                 '转化组均值': round(conv[feat].mean(), 2),
                 'p值': round(p_val, 6),
-                '显著性': sig,
+                '显著性(未校正)': sig_raw,
+                '显著性(Bonferroni)': sig_corrected,
                 'Cohens_d': round(d_val, 2),
                 '效应量': '大' if abs(d_val) > 0.8 else '中' if abs(d_val) > 0.5 else '小',
             })
-            logger.info("  %s | %s: 流失 %.2f vs 转化 %.2f (d=%.2f %s)",
-                        label, feat, lost[feat].mean(), conv[feat].mean(), d_val, sig)
+            logger.info("  %s | %s: 流失 %.2f vs 转化 %.2f (d=%.2f %s | Bonferroni: %s)",
+                        label, feat, lost[feat].mean(), conv[feat].mean(), d_val, sig_raw, sig_corrected)
 
     return results
 
@@ -737,6 +732,25 @@ def compute_churn_matrix(funnel_wide: pd.DataFrame) -> pd.DataFrame:
 # 阶段 5: 损失量化与优先级
 # ═══════════════════════════════════════════════════════════════
 
+def _build_session_losses(funnel_wide, stage_pairs, stage_crs, aov):
+    """预计算每个流失会话的损失金额 → {session_id: loss_amount}，供 bootstrap 快速重采样"""
+    session_loss = {}
+    cumulative_lost = set()
+    for _, stage_col, next_col in stage_pairs:
+        reached = set(
+            funnel_wide[funnel_wide[stage_col] == 1]['session_id'].unique()
+        ) - cumulative_lost
+        continued = set(
+            funnel_wide[funnel_wide[next_col] == 1]['session_id'].unique()
+        ) - cumulative_lost
+        lost_sessions = reached - continued
+        cumulative_lost |= lost_sessions
+        cr = stage_crs.get(stage_col, 0.0)
+        for sid in lost_sessions:
+            session_loss[sid] = cr * aov
+    return session_loss
+
+
 def compute_loss_amount(funnel_wide: pd.DataFrame,
                         transactions: pd.DataFrame | None = None) -> pd.DataFrame:
     """各环节损失金额量化 — 流失会话级联去重，已转化用户客单价驱动"""
@@ -769,6 +783,17 @@ def compute_loss_amount(funnel_wide: pd.DataFrame,
         ('购物车 → 结算页', 'step4_cart', 'step5_checkout'),
     ]
 
+    # Per-stage expected conversion rate: among sessions reaching each stage,
+    # what proportion eventually purchased? Avoids the implausible assumption
+    # that 100% of lost sessions would convert.
+    all_purchasers = set(funnel_wide[funnel_wide['step_purchase'] == 1]['session_id'].unique())
+    stage_crs = {}
+    for _, stage_col, _ in stage_pairs:
+        stage_sessions = set(funnel_wide[funnel_wide[stage_col] == 1]['session_id'].unique())
+        purchasers = stage_sessions & all_purchasers
+        stage_crs[stage_col] = len(purchasers) / len(stage_sessions) if stage_sessions else 0.0
+
+    session_loss_map = {}  # session_id → loss_amount, 用于 bootstrap
     losses = []
     cumulative_lost = set()
 
@@ -785,13 +810,20 @@ def compute_loss_amount(funnel_wide: pd.DataFrame,
         reached_count = len(reached)
         lost_count = len(lost_sessions)
         loss_rate = round(lost_count / reached_count * 100, 2) if reached_count > 0 else 0
-        loss_amount = lost_count * aov
+        expected_cr = stage_crs[stage_col]
+        loss_amount = lost_count * expected_cr * aov
+
+        # 记录每个流失会话的损失（用于 bootstrap）
+        per_session = expected_cr * aov
+        for sid in lost_sessions:
+            session_loss_map[sid] = per_session
 
         losses.append({
             '漏斗环节': label,
             '流失会话数': lost_count,
             '入环节会话数': reached_count,
             '环节流失率(%)': loss_rate,
+            '预期转化率(%)': round(expected_cr * 100, 2),
             '客单价': round(aov, 2),
             '估算损失金额': round(loss_amount, 2),
         })
@@ -801,9 +833,10 @@ def compute_loss_amount(funnel_wide: pd.DataFrame,
     total_lost = loss_df['流失会话数'].sum()
 
     for _, row in loss_df.iterrows():
-        logger.info("  %s: 流失 %s (%.2f%%), 损失 Y%s",
+        logger.info("  %s: 流失 %s (%.2f%%), 预期CR %.2f%%, 损失 Y%s",
                     row['漏斗环节'], f"{int(row['流失会话数']):,}",
-                    row['环节流失率(%)'], f"{row['估算损失金额']:,.0f}")
+                    row['环节流失率(%)'], row['预期转化率(%)'],
+                    f"{row['估算损失金额']:,.0f}")
 
     logger.info("估算总损失: Y%s (流失会话合计: %s, 总会话: %s)",
                 f"{total_loss:,.0f}", f"{int(total_lost):,}", f"{len(funnel_wide):,}")
@@ -814,17 +847,39 @@ def compute_loss_amount(funnel_wide: pd.DataFrame,
     refund_revenue = refund_customers['total_revenue'].sum()
     logger.info("退款损失: %s 笔退款客户, 涉及金额 Y%s", f"{refund_count:,}", f"{refund_revenue:,.0f}")
 
+    # Bootstrap 95% CI — 逐次采样避免大矩阵 OOM
+    rng = np.random.default_rng(42)
+    all_sids = np.array(list(session_loss_map.keys()))
+    loss_values = np.array([session_loss_map[s] for s in all_sids], dtype=np.float64)
+    n_lost = len(all_sids)
+    boot_means = np.empty(1000, dtype=np.float64)
+    for i in range(1000):
+        boot_means[i] = rng.choice(loss_values, size=n_lost, replace=True).mean()
+    boot_total_losses = boot_means * n_lost
+    ci_low, ci_high = np.percentile(boot_total_losses, [2.5, 97.5])
+    logger.info("总损失 95%% Bootstrap CI: Y%s ~ Y%s (1000次重采样)",
+                f"{ci_low:,.0f}", f"{ci_high:,.0f}")
+
     return loss_df
 
 
-def compute_pie_priority(loss_df: pd.DataFrame) -> pd.DataFrame:
-    """PIE 优先级矩阵"""
+def compute_pie_priority(loss_df: pd.DataFrame, total_sessions: int | None = None) -> pd.DataFrame:
+    """PIE 优先级矩阵
+
+    Ease 评分依据（基于典型电商优化经验，非数据驱动，仅供参考）：
+    - 首页→列表页 (7): 导航/推荐算法优化，后端改动为主，1-2 sprint
+    - 列表页→详情页 (6): 筛选/排序/缩略图改进，涉及前端+索引优化
+    - 详情页→购物车 (6): CTA 按钮/信任信号/库存显示，需 A/B 测试验证
+    - 购物车→结算页 (8): 移除表单字段/自动填充/优惠码优化，改动面小见效快
+
+    实际 Ease 取决于团队能力和系统架构，建议在真实项目中用工程估点替换。"""
     logger.info("=" * 60)
     logger.info("12. PIE 优先级计算")
     logger.info("=" * 60)
 
     total_loss = loss_df['估算损失金额'].sum()
-    total_sessions = loss_df['入环节会话数'].max()
+    if total_sessions is None:
+        total_sessions = loss_df['入环节会话数'].max()
 
     pie = loss_df.copy()
     pie['Potential'] = (pie['估算损失金额'] / total_loss * 10).clip(1, 10).round(1)
@@ -837,13 +892,17 @@ def compute_pie_priority(loss_df: pd.DataFrame) -> pd.DataFrame:
         '购物车 → 结算页': 8,
     }
     pie['Ease'] = pie['漏斗环节'].map(ease_map).fillna(5)
+    # 敏感性：Ease ±1 时的 PIE 得分范围
+    pie['PIE_Ease+1'] = (pie['Potential'] * pie['Importance'] * (pie['Ease'] + 1)).round(0)
+    pie['PIE_Ease-1'] = (pie['Potential'] * pie['Importance'] * (pie['Ease'] - 1)).round(0)
     pie['PIE得分'] = (pie['Potential'] * pie['Importance'] * pie['Ease']).round(0)
     pie = pie.sort_values('PIE得分', ascending=False)
 
     for _, row in pie.iterrows():
-        logger.info("  %s: PIE=%.0f (P=%.1f I=%.1f E=%.1f)",
+        logger.info("  %s: PIE=%.0f (P=%.1f I=%.1f E=%.1f) [Ease±1→%.0f-%.0f]",
                     row['漏斗环节'], row['PIE得分'],
-                    row['Potential'], row['Importance'], row['Ease'])
+                    row['Potential'], row['Importance'], row['Ease'],
+                    row['PIE_Ease-1'], row['PIE_Ease+1'])
 
     return pie
 
@@ -991,49 +1050,6 @@ def compute_trend_attribution(funnel_wide: pd.DataFrame) -> pd.DataFrame:
 
 
 # ═══════════════════════════════════════════════════════════════
-# A/B 实验分析
-# ═══════════════════════════════════════════════════════════════
-
-def compute_ab_test_analysis(funnel_wide: pd.DataFrame) -> pd.DataFrame:
-    """A/B 实验各组转化率对比 + 统计检验"""
-    logger.info("=" * 60)
-    logger.info("14. A/B 实验效果分析")
-    logger.info("=" * 60)
-
-    groups = funnel_wide.groupby('experiment_group').agg(
-        会话数=('session_id', 'nunique'),
-        购买会话数=('step_purchase', 'sum'),
-        平均时长=('total_duration_sec', 'median'),
-    )
-    # 客户级收入 — 每组按 customer_id 去重求均值
-    for g in groups.index:
-        g_cust = funnel_wide[funnel_wide['experiment_group'] == g][['customer_id', 'total_revenue']].drop_duplicates('customer_id')
-        groups.loc[g, '客户均收入'] = round(g_cust['total_revenue'].mean(), 2)
-    groups['转化率(%)'] = (groups['购买会话数'] / groups['会话数'] * 100).round(2)
-
-    for g, row in groups.iterrows():
-        logger.info("  %s: %s 会话, 转化率 %.2f%%, 客户均收入 Y%.2f",
-                    g, f"{int(row['会话数']):,}", row['转化率(%)'], row['客户均收入'])
-
-    # Control vs Variant 卡方检验
-    for variant in ['Variant_A', 'Variant_B']:
-        subset = funnel_wide[funnel_wide['experiment_group'].isin(['Control', variant])]
-        ct = pd.crosstab(subset['experiment_group'], subset['step_purchase'])
-        chi2, p_val, _, _ = stats.chi2_contingency(ct)
-        sig = '***' if p_val < 0.001 else '**' if p_val < 0.01 else 'ns'
-        logger.info("  Control vs %s: X2=%.2f, p=%.4f %s", variant, chi2, p_val, sig)
-
-    # 效果增量估算
-    control_rate = groups.loc['Control', '转化率(%)']
-    for variant in ['Variant_A', 'Variant_B']:
-        vr = groups.loc[variant, '转化率(%)']
-        lift = (vr - control_rate) / control_rate * 100
-        logger.info("  %s 相对提升: %+.2f%%", variant, lift)
-
-    return groups
-
-
-# ═══════════════════════════════════════════════════════════════
 # 广告 ROAS 分析
 # ═══════════════════════════════════════════════════════════════
 
@@ -1106,11 +1122,11 @@ def compute_cohort_retention(funnel_wide: pd.DataFrame) -> pd.DataFrame:
     purchases = purchases.merge(first_purchase[['customer_id', 'cohort_month']],
                                 on='customer_id', how='inner')
 
-    # cohort_index = 购买月份与首次购买月份的月差
+    # cohort_index = 购买月份与首次购买月份的月差 (Period ordinal)
     purchases['cohort_index'] = (
-        purchases['purchase_month'].astype(str).apply(lambda x: pd.Timestamp(x))
-        - purchases['cohort_month'].astype(str).apply(lambda x: pd.Timestamp(x))
-    ).dt.days // 30
+        purchases['purchase_month'].apply(lambda x: x.ordinal)
+        - purchases['cohort_month'].apply(lambda x: x.ordinal)
+    )
 
     # 构建留存矩阵
     cohort_sizes = first_purchase.groupby('cohort_month')['customer_id'].nunique()
@@ -1121,13 +1137,15 @@ def compute_cohort_retention(funnel_wide: pd.DataFrame) -> pd.DataFrame:
         aggfunc='nunique',
     )
 
-    # 转为留存率
+    # 转为留存率 — 缺失 cohort 或 size=0 时留存率留空而非静默放大
     for idx in retention_matrix.index:
-        size = cohort_sizes.get(idx, 1)
+        size = cohort_sizes.get(idx, 0)
         if size > 0:
             retention_matrix.loc[idx] = (
                 retention_matrix.loc[idx] / size * 100
             ).round(1)
+        else:
+            logger.warning("  cohort %s size=0 或缺失，留存率留空", idx)
 
     retention_matrix = retention_matrix.sort_index()
 
@@ -1173,27 +1191,25 @@ def save_baseline(funnel_wide: pd.DataFrame) -> dict[str, float | int | str]:
     snapshot = {
         'analysis_timestamp': datetime.now().isoformat(),
         'analysis_version': '2.0',
-        'metric_definitions': {
-            'session_conversion_rate': '购买会话数 / 全部会话数 × 100 (整体会话转化率)',
-            'view_to_purchase_rate': '购买会话数 / 浏览会话数 × 100 (浏览到购买转化率)',
-            'note': '双口径定义不同, 不可直接比较。session_cr 分母更大故数值更低, view_to_purchase_cr 仅含浏览会话故数值更高。',
+        'documentation': 'docs/04-results.md',
+        'metrics': {
+            'total_sessions': total_sessions,
+            'purchase_sessions': purchase_sessions,
+            'view_sessions': view_sessions,
+            'session_conversion_rate_pct': round(purchase_sessions / total_sessions * 100, 2),
+            'view_to_purchase_rate_pct': round(purchase_sessions / view_sessions * 100, 2) if view_sessions > 0 else 0,
+            'total_revenue': round(float(cust_revenue['total_revenue'].sum()), 2),
+            'refund_rate_pct': round(cust_revenue['has_refund'].mean() * 100, 2),
+            'avg_session_duration_sec': round(float(funnel_wide['total_duration_sec'].mean()), 2),
         },
-        'total_sessions': total_sessions,
-        'purchase_sessions': purchase_sessions,
-        'view_sessions': view_sessions,
-        'session_conversion_rate': round(purchase_sessions / total_sessions * 100, 2),
-        'view_to_purchase_rate': round(purchase_sessions / view_sessions * 100, 2) if view_sessions > 0 else 0,
-        'total_revenue': round(float(cust_revenue['total_revenue'].sum()), 2),
-        'refund_rate': round(cust_revenue['has_refund'].mean() * 100, 2),
-        'avg_session_duration': round(float(funnel_wide['total_duration_sec'].mean()), 2),
         'page_coverage': {col: int(funnel_wide[col].sum()) for col in PAGE_FUNNEL_COLS},
-        'page_coverage_note': '页面覆盖统计(独立到达即计入), 非严格路径漏斗。下游页面可因深链流量超过上游。',
     }
+    m = snapshot['metrics']
     logger.info("整体会话转化率 (Session CR): %.2f%% = 购买 %s / 全部 %s 会话",
-                snapshot['session_conversion_rate'],
+                m['session_conversion_rate_pct'],
                 f"{purchase_sessions:,}", f"{total_sessions:,}")
     logger.info("浏览到购买转化率 (View-to-Purchase CR): %.2f%% = 购买 %s / 浏览 %s 会话",
-                snapshot['view_to_purchase_rate'],
+                m['view_to_purchase_rate_pct'],
                 f"{purchase_sessions:,}", f"{view_sessions:,}")
     logger.info("注意: 两个转化率口径不同, 不可直接比较。")
     with open(BASELINE_JSON, 'w', encoding='utf-8') as f:
@@ -1235,7 +1251,68 @@ def generate_strategy_brief(loss_df: pd.DataFrame,
     if refund_rate > 5:
         brief.append(f"P2 退款治理: 退款率 {refund_rate:.1f}%, 高于行业均值, 建议排查高退款品类")
 
+    # 行业基准对标
+    from python.config import CRO_BENCHMARKS
+    session_cr = funnel_wide['step_purchase'].mean() * 100
+    refund_rate = funnel_wide['has_refund'].mean() * 100
+    logger.info("--- 行业基准对标 ---")
+    benchmarks = [
+        ('会话转化率', session_cr, CRO_BENCHMARKS['avg_session_cr'], CRO_BENCHMARKS['top_quartile_session_cr'], '%'),
+        ('退款率', refund_rate, CRO_BENCHMARKS['avg_refund_rate'], None, '%'),
+    ]
+    for name, actual, avg, top, unit in benchmarks:
+        status = '优于' if (name == '退款率' and actual <= avg) or (name != '退款率' and actual >= top) else '低于' if name != '退款率' else '高于'
+        ref = f"行业平均 {avg}{unit}" + (f", 前25% {top}{unit}" if top else "")
+        logger.info("  %s: %.2f%s (%s %s)", name, actual, unit, status, ref)
+
     for b in brief:
         logger.info("  %s", b)
 
     return brief
+
+
+def what_if_simulation(loss_df: pd.DataFrame,
+                       improvements: dict[str, float] | None = None) -> pd.DataFrame:
+    """增量效果预估 — "如果 PDP→Cart 转化率提升 5pp，增量收入多少？"
+
+    improvements: {'首页 → 列表页': 0.05, '详情页 → 购物车': 0.10, ...}
+    默认演示最关键的三个环节。
+    """
+    logger.info("=" * 60)
+    logger.info("What-If 增量效果模拟")
+    logger.info("=" * 60)
+
+    if improvements is None:
+        improvements = {
+            '详情页 → 购物车': 0.10,   # PDP→Cart +10pp
+            '列表页 → 详情页': 0.05,   # PLP→PDP +5pp
+            '购物车 → 结算页': 0.05,   # Cart→Checkout +5pp
+        }
+
+    results = []
+    for label, uplift in improvements.items():
+        row = loss_df[loss_df['漏斗环节'] == label]
+        if row.empty:
+            continue
+        row = row.iloc[0]
+        lost_sessions = row['流失会话数']
+        expected_cr = row['预期转化率(%)'] / 100
+        aov = row['客单价']
+        # 提升后挽回：流失会话 × uplift × 预期转化率 × 客单价
+        recovered_sessions = int(lost_sessions * uplift)
+        recovered_revenue = recovered_sessions * expected_cr * aov
+        results.append({
+            '优化环节': label,
+            '转化率提升': f'+{uplift*100:.0f}pp',
+            '挽回会话数': recovered_sessions,
+            '预期增量收入': round(recovered_revenue, 2),
+            '当前损失': row['估算损失金额'],
+        })
+        logger.info("  %s +%dpp -> 挽回 %s 会话, 增量收入 Y%s",
+                    label, int(uplift * 100), f"{recovered_sessions:,}",
+                    f"{recovered_revenue:,.0f}")
+
+    sim_df = pd.DataFrame(results)
+    total_incremental = sim_df['预期增量收入'].sum()
+    logger.info("合计预期增量收入: Y%s", f"{total_incremental:,.0f}")
+    return sim_df

@@ -18,7 +18,7 @@
 
 ### 1.1 页面漏斗转化率超过 100%（严重）
 
-**问题**：[docs/04-results.md](../docs/04-results.md) 报告首页→列表页转化率为 **131.77%**，数学上不可能。
+**问题**：[04-results.md](../04-results.md) 报告首页→列表页转化率为 **131.77%**，数学上不可能。
 
 **根因**：[python/funnel_analysis.py](../python/funnel_analysis.py#L39) 的 `compute_page_funnel` 使用交叉引用计算转化率：
 
@@ -92,27 +92,6 @@ reached_plp = reached_home[reached_home['step2_plp'] == 1]
 lost_plp = reached_plp[reached_plp['step3_pdp'] == 0]
 
 # 以此类推...
-```
-
----
-
-### 1.4 A/B 实验分组聚合方式错误（中等）
-
-**问题**：[python/data_cleaning.py](../python/data_cleaning.py#L61) 在会话属性聚合时对 `experiment_group` 使用 `.first()`：
-
-```python
-experiment_group=('experiment_group', 'first'),
-```
-
-`.first()` 取的是该会话中按原始顺序第一条事件的 group 值，但原始 CSV 中的顺序并不代表任何有意义的排序。A/B 实验的随机化单元应该是**用户**，而非会话中某条任意事件。
-
-**修复**：按 `customer_id` 去重聚合 `experiment_group`（取 mode），或在 funnel_wide 构建后重新关联用户级分组：
-
-```python
-user_group = events.groupby('customer_id')['experiment_group'].agg(
-    lambda x: x.mode().iloc[0] if not x.mode().empty else x.iloc[0]
-).reset_index()
-session_attr = session_attr.merge(user_group, on='customer_id', how='left', suffixes=('_old', ''))
 ```
 
 ---
@@ -300,29 +279,6 @@ def compute_stage_potential_value(funnel_wide, stage_col, next_col):
 
 **修复**：删除对 GA4 的引用，改为"参考电商行业行为分桶最佳实践"。
 
-#### d) A/B 实验分析缺少必要步骤
-
-**缺失项**：
-
-- **样本量功效分析**（Power Analysis）：需要多少样本才能以 80% 功效检测到 X% 的提升？
-- **置信区间**：+9.25% 的 95% CI 是什么？
-- **业务显著性**：+9.25% 落到增量收入是多少？
-
-**修复**：
-
-```python
-from statsmodels.stats.proportion import proportion_effectsize, power
-
-# 功效分析
-effect = proportion_effectsize(control_rate + min_detectable_lift, control_rate)
-required_n = power.solve_power(effect_size=effect, power=0.8, alpha=0.05)
-
-# 置信区间
-from statsmodels.stats.proportion import proportion_confint
-ci_control = proportion_confint(count=control_purchases, nobs=control_sessions)
-ci_variant = proportion_confint(count=variant_purchases, nobs=variant_sessions)
-```
-
 ### 3.3 缺失的标准分析方法
 
 | 方法 | 数据可行性 | 业务价值 |
@@ -351,7 +307,6 @@ ci_variant = proportion_confint(count=variant_purchases, nobs=variant_sessions)
 |:---|:---:|:---|
 | 数据质量报告 | **高** | 缺失率、异常值分布、关联完整性——目前只有 logger 输出 |
 | 增量效果预估 | **高** | "如果 PDP→Cart 提升 5%，年增量收入是多少？" |
-| 实验功效分析 | 中 | A/B 最小样本量计算，否则无法判断实验是否充分 |
 | 监控告警阈值 | 中 | 什么指标跌破什么值触发什么动作 |
 | 数据管道调度 | 中 | CI/CD / Airflow / cron |
 | 代码能从头跑到尾 | **最高** | 目前测试跑不通，MySQL 导出跑不通 |
@@ -672,19 +627,6 @@ if negative_mask.any():
                    funnel_wide.loc[negative_mask, 'customer_id'].unique().tolist())
 ```
 
-**A/B 实验用户级分组** — [python/data_cleaning.py](../python/data_cleaning.py) `build_session_attributes` 末尾添加：
-
-```python
-# 按 customer_id 重新确定实验分组（用户级，而非会话级 .first()）
-user_exp = events.groupby('customer_id')['experiment_group'].agg(
-    lambda x: x.mode().iloc[0] if not x.mode().empty else x.iloc[0]
-).reset_index()
-user_exp.columns = ['customer_id', 'experiment_group_user']
-session_attr = session_attr.merge(user_exp, on='customer_id', how='left')
-session_attr['experiment_group'] = session_attr['experiment_group_user'].fillna(session_attr['experiment_group'])
-session_attr = session_attr.drop(columns=['experiment_group_user'])
-```
-
 **文档中删除 GA4 引用** — [docs/03-methodology.md](../docs/03-methodology.md#L57)：
 
 ```
@@ -705,7 +647,6 @@ session_attr = session_attr.drop(columns=['experiment_group_user'])
 | **P1** | 品类漏斗计数错误 | 品类分析结论不可信 |
 | **P1** | 损失权重无依据 | 核心业务价值主张不严谨 |
 | **P1** | MySQL 导出失败 | 数据管道不完整 |
-| **P2** | A/B 分组方式错误 | 实验结论可能偏差 |
 | **P2** | total_revenue.abs() | 隐藏数据质量问题 |
 | **P2** | 文档引用不准确 | 面试中可能被追问 |
 | **P3** | 缺失留存/Sankey/RFM | 锦上添花，不影响基本可用性 |

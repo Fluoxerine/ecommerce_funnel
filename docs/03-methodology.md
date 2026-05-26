@@ -1,6 +1,6 @@
 # 分析方法论
 
-> 所有方法均来自行业标准实践（GA4、Amplitude、CRO 行业框架），不虚构方法。
+> 代码版本：2026-05-26 | 所有方法均来自行业标准实践，不虚构方法。
 
 ---
 
@@ -166,15 +166,6 @@ PIE = Potential × Importance × Ease
 
 ---
 
-## 六、A/B 实验分析
-
-对 `experiment_group` 字段（Control / Variant_A / Variant_B）进行：
-- 各组转化率比较
-- Control vs 各 Variant 的卡方检验
-- 相对提升率计算: `(rate_variant - rate_control) / rate_control × 100%`
-
----
-
-## 七、月度趋势分析
+## 六、月度趋势分析
 
 按年-月分组计算各月转化率，观察 3 年期间的长期趋势和季节性波动。补充年度均值线辅助趋势判读。

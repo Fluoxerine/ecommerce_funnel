@@ -1,11 +1,10 @@
-"""可视化模块 — 13 张优化图表（matplotlib + plotly）— 中文版"""
+"""可视化模块 — 17 张 matplotlib 图表（中文版）"""
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import matplotlib.ticker as mticker
 import numpy as np
-import plotly.graph_objects as go
 from python.config import (
     FUNNEL_COLORS, PRIMARY, ACCENT, CHART_DIR, logger,
 )
@@ -46,37 +45,48 @@ plt.rcParams.update({
     'legend.fontsize': 10,
 })
 
-# ── 统一调色板 ──────────────────────────────────────
-C_RED    = '#D64545'
-C_BLUE   = '#3A7CA5'
-C_GREEN  = '#4CAF82'
-C_ORANGE = '#E8934B'
-C_PURPLE = '#8E6BAE'
+# ── 统一调色板 (Wong 2011 色盲友好) ──────────────
+C_BLUE   = '#0072B2'
+C_ORANGE = '#E69F00'
+C_GREEN  = '#009E73'   # bluish-green, distinguishable from red
+C_RED    = '#D55E00'   # vermilion, distinguishable from green
+C_PURPLE = '#CC79A7'
+C_CYAN   = '#56B4E9'
 C_GREY   = '#A0AAB5'
 C_DARK   = '#2C3E50'
 C_LIGHT  = '#E8ECF1'
 
-# 专用配色
-CL_RED    = '#E8C4C4'   # 淡红
-CL_BLUE   = '#C4D9E8'   # 淡蓝
-CL_GREEN  = '#C4E8D4'   # 淡绿
-CL_ORANGE = '#F0D8C0'   # 淡橙
-CL_GREY   = '#DDE1E6'   # 淡灰
+# 淡色背景
+CL_BLUE   = '#C4D9E8'
+CL_ORANGE = '#F0D8C0'
+CL_GREEN  = '#C4E8D4'
+CL_RED    = '#E8C4C4'
+CL_GREY   = '#DDE1E6'
 
-DURATION_COLORS = ['#D64545', '#E8934B', '#3A7CA5', '#4CAF82']
-STAGE_COLORS    = ['#5B9BD5', '#E8934B', '#D64545', '#8E6BAE']
-CHANNEL_COLORS_5 = ['#3A7CA5', '#B8456E', '#E8934B', '#D64545', '#4CAF82']
+DURATION_COLORS = ['#0072B2', '#E69F00', '#56B4E9', '#009E73']
+STAGE_COLORS    = ['#0072B2', '#56B4E9', '#009E73', '#CC79A7']
+CHANNEL_COLORS_5 = ['#0072B2', '#CC79A7', '#E69F00', '#D55E00', '#009E73']
+
+# 全局图表元信息 — 绘图前由 main.py 设置
+_CHART_META: dict[str, int] = {}
 
 
-def _save(fig, name: str, is_plotly: bool = False) -> None:
-    if is_plotly:
-        fig.write_html(str(CHART_DIR / f'{name}.html'),
-                       include_plotlyjs='cdn', full_html=True)
-    else:
-        fig.savefig(str(CHART_DIR / f'{name}.png'), dpi=180, bbox_inches='tight',
-                    facecolor=fig.get_facecolor(), edgecolor='none')
+def set_chart_meta(n_sessions: int) -> None:
+    """设置全局样本量 → 所有图表自动添加元信息脚注"""
+    _CHART_META['n_sessions'] = n_sessions
+
+
+def _save(fig, name: str) -> None:
+    from datetime import date
+    n = _CHART_META.get('n_sessions', 0)
+    n_str = f' | n={n:,} sessions' if n else ''
+    footnote = f'ecommerce_funnel_analysis{n_str} | {date.today().isoformat()}'
+    fig.text(0.5, -0.01, footnote, ha='center', fontsize=7,
+             color='#999999', transform=fig.transFigure)
+    fig.savefig(str(CHART_DIR / f'{name}.png'), dpi=180, bbox_inches='tight',
+                facecolor=fig.get_facecolor(), edgecolor='none')
     plt.close('all')
-    logger.info("  Saved: %s", (CHART_DIR / f'{name}.{"html" if is_plotly else "png"}').name)
+    logger.info("  Saved: %s", (CHART_DIR / f'{name}.png').name)
 
 
 # ═══════════════════════════════════════════════════════════
@@ -114,78 +124,74 @@ def plot_cleaning_funnel(cleaning_stats: dict) -> None:
 
 
 # ═══════════════════════════════════════════════════════════
-# 01 — 页面级漏斗 (Plotly)
+# 01 — 页面覆盖漏斗 (matplotlib)
 # ═══════════════════════════════════════════════════════════
 def plot_page_funnel(funnel_df: 'pd.DataFrame') -> None:
     labels = funnel_df['漏斗阶段'].tolist()
     counts = funnel_df['到达会话数'].tolist()
-    # 兼容新旧列名: 优先使用 "交叉到达率(%)", 回退到旧名 "上一阶段转化率(%)"
     rate_col = '交叉到达率(%)' if '交叉到达率(%)' in funnel_df.columns else '上一阶段转化率(%)'
     rates = funnel_df[rate_col].tolist()
+    overall_rates = funnel_df['整体到达率(%)'].tolist()
 
-    custom_text = []
-    for i, (label, count, rate) in enumerate(zip(labels, counts, rates)):
+    fig, ax = plt.subplots(figsize=(12, 7))
+    max_count = max(counts)
+    # 居中条形模拟漏斗: 条宽按比例缩放
+    widths = [c / max_count for c in counts]
+    y_pos = range(len(labels))
+
+    bars = ax.barh(y_pos, counts, height=0.6, color=STAGE_COLORS[:len(labels)],
+                   edgecolor='white', linewidth=1.5, zorder=3)
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(labels, fontsize=12)
+    ax.invert_yaxis()
+    ax.set_xlim(0, max_count * 1.3)
+    ax.tick_params(left=False)
+    ax.set_title('页面覆盖分析 (Page Coverage)\n各页面独立到达统计 | 交叉到达率 = 同时到达前后两页 / 到达前页',
+                 fontsize=14, pad=16)
+
+    for i, (bar, count, rate, ovr) in enumerate(zip(bars, counts, rates, overall_rates)):
         if i == 0:
-            custom_text.append(f'<b>{label}</b><br>{count:,} 会话')
+            label = f'{count:,} 会话 ({ovr:.1f}%)'
         else:
-            custom_text.append(
-                f'<b>{label}</b><br>{count:,} 会话<br>'
-                f'<i>交叉到达率 {rate}%</i>'
-            )
-
-    fig = go.Figure(go.Funnel(
-        y=labels, x=counts, text=custom_text,
-        textposition='inside', textinfo='text',
-        textfont=dict(size=13, color='white'),
-        marker=dict(
-            color=['#D64545', '#E8934B', '#F2D398', '#5B9BD5', '#3A7CA5'],
-            line=dict(width=0),
-        ),
-        connector=dict(fillcolor='#ECEFF1', line=dict(width=0)),
-    ))
-    fig.update_layout(
-        title=dict(
-            text='页面覆盖分析 (Page Coverage)<br>'
-                 '<sup>各页面独立到达统计 | 交叉到达率 = 同时到达前后两页的会话 / 到达前页的会话</sup>'
-                 '<br><sup>注意: 非严格顺序漏斗, 下游页面可因深链流量超过上游</sup>',
-            font=dict(size=17),
-        ),
-        template='plotly_white',
-        height=580,
-        margin=dict(t=120, b=40, l=60, r=40),
-        font=dict(size=13, color='#2C3E50'),
-    )
-    _save(fig, '01_page_funnel', is_plotly=True)
+            label = f'{count:,} | 交叉到达率 {rate}% | 整体 {ovr:.1f}%'
+        ax.text(bar.get_width() + max_count * 0.012, bar.get_y() + bar.get_height() / 2,
+                label, va='center', fontsize=10, color=C_DARK)
+    ax.set_xlabel('')
+    fig.tight_layout()
+    _save(fig, '01_page_funnel')
 
 
 # ═══════════════════════════════════════════════════════════
-# 02 — 行为级漏斗 (Plotly)
+# 02 — 行为级漏斗 (matplotlib)
 # ═══════════════════════════════════════════════════════════
 def plot_event_funnel(funnel_df: 'pd.DataFrame') -> None:
-    fig = go.Figure(go.Funnel(
-        y=funnel_df['漏斗阶段'].tolist(),
-        x=funnel_df['会话数'].tolist(),
-        textposition='inside',
-        textinfo='value+percent previous',
-        textfont=dict(size=14, color='white'),
-        marker=dict(
-            color=['#5B9BD5', '#4CAF82', '#E8934B', '#D64545'],
-            line=dict(width=0),
-        ),
-        connector=dict(fillcolor='#ECEFF1', line=dict(width=0)),
-    ))
-    fig.update_layout(
-        title=dict(
-            text='行为级转化漏斗<br>'
-                 '<sup>浏览 → 点击 → 加购 → 购买</sup>',
-            font=dict(size=17),
-        ),
-        template='plotly_white',
-        height=520,
-        margin=dict(t=100, b=40, l=60, r=40),
-        font=dict(size=13, color='#2C3E50'),
-    )
-    _save(fig, '02_event_funnel', is_plotly=True)
+    labels = funnel_df['漏斗阶段'].tolist()
+    counts = funnel_df['会话数'].tolist()
+    prev_rates = funnel_df['上一阶段转化率(%)'].tolist()
+    total_rates = funnel_df['整体转化率(%)'].tolist()
+
+    fig, ax = plt.subplots(figsize=(12, 6.5))
+    max_count = max(counts)
+    y_pos = range(len(labels))
+
+    ax.barh(y_pos, counts, height=0.55, color=STAGE_COLORS[:len(labels)],
+            edgecolor='white', linewidth=1.5, zorder=3)
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(labels, fontsize=12)
+    ax.invert_yaxis()
+    ax.set_xlim(0, max_count * 1.35)
+    ax.tick_params(left=False)
+    ax.set_title('行为级转化漏斗\n浏览 → 点击 → 加购 → 购买', fontsize=14, pad=16)
+
+    for i, (count, pr, tr) in enumerate(zip(counts, prev_rates, total_rates)):
+        if i == 0:
+            label = f'{count:,} 会话 ({tr:.1f}%)'
+        else:
+            label = f'{count:,} | 上阶段 {pr:.1f}% | 整体 {tr:.1f}%'
+        ax.text(count + max_count * 0.012, i, label, va='center', fontsize=10, color=C_DARK)
+    ax.set_xlabel('')
+    fig.tight_layout()
+    _save(fig, '02_event_funnel')
 
 
 # ═══════════════════════════════════════════════════════════
@@ -271,16 +277,43 @@ def plot_channel_funnels(channel_funnels: dict[str, 'pd.DataFrame']) -> None:
 # 04 — 损失瀑布图
 # ═══════════════════════════════════════════════════════════
 def plot_loss_waterfall(loss_df: 'pd.DataFrame') -> None:
-    fig, ax = plt.subplots(figsize=(11, 9))
-    labels = [l.replace(' → ', '\n→ ') for l in loss_df['漏斗环节']]
+    """瀑布图 — 各环节损失金额级联累积，清晰展示总损失如何逐步累积"""
+    fig, ax = plt.subplots(figsize=(13, 8))
+    labels = [l.replace(' → ', '→') for l in loss_df['漏斗环节']]
     values = loss_df['估算损失金额'].values / 10000
     n = len(loss_df)
+    total_loss = values.sum()
+    max_val = values.max()
 
-    color_grad = ['#E8A0A0', '#D64545', '#C0392B', '#922B21']
-    bars = ax.bar(range(n), values, width=0.50, color=color_grad,
-                  edgecolor='white', linewidth=1.5, alpha=0.9, zorder=3)
+    # 阶段严重度颜色：最深的给最大单环节损失
+    sorted_vals = sorted(values, reverse=True)
 
-    max_val = max(values)
+    def _severity_color(val):
+        rank = sorted_vals.index(val) / max(len(sorted_vals) - 1, 1)
+        r = int(232 - rank * (232 - 120))
+        g = int(100 - rank * (100 - 50))
+        b = int(100 - rank * (100 - 50))
+        return f'#{r:02x}{g:02x}{b:02x}'
+
+    bar_colors = [_severity_color(v) for v in values]
+
+    # 瀑布核心：cumulative 跟踪每步累积值, size n+1 so cumulative[n] = total
+    cumulative = np.zeros(n + 1)
+    bottoms = np.zeros(n)
+
+    for i in range(n):
+        bottoms[i] = cumulative[i]
+        cumulative[i + 1] = cumulative[i] + values[i]
+
+    bars = ax.bar(range(n), values, width=0.55, color=bar_colors,
+                  edgecolor='white', linewidth=1.5, alpha=0.92, zorder=3,
+                  bottom=bottoms, label='各环节损失')
+
+    # 累积线连接各柱顶
+    ax.plot(range(n), cumulative[:-1], 'D-', color=C_BLUE, linewidth=2.2,
+            markersize=9, markerfacecolor='white', markeredgecolor=C_BLUE,
+            markeredgewidth=2, zorder=5, label='累积损失')
+
     lost_sessions = loss_df['流失会话数'].values
     churn_rates = loss_df['环节流失率(%)'].values
 
@@ -288,27 +321,39 @@ def plot_loss_waterfall(loss_df: 'pd.DataFrame') -> None:
             zip(bars, values, lost_sessions, churn_rates)):
         cx = bar.get_x() + bar.get_width() / 2
         bh = bar.get_height()
-        ax.text(cx, bh + max_val * 0.015,
+        bot = bar.get_y()
+        # 金额标在柱顶上方
+        ax.text(cx, bot + bh + max_val * 0.012,
                 f'¥{val:,.0f}万', ha='center', va='bottom',
-                fontsize=14, fontweight='bold', color='#922B21')
-        ax.text(cx, bh * 0.75,
-                f'{lost:,} 人流失\n流失率 {rate:.1f}%',
+                fontsize=12, fontweight='bold', color='#922B21')
+        # 流失信息标在柱中
+        mid = bot + bh * 0.4
+        ax.text(cx, mid,
+                f'{lost:,}\n流失{rate:.1f}%',
                 ha='center', va='center',
-                fontsize=11, color='white', fontweight='bold', alpha=0.95)
+                fontsize=10, color='#2C3E50', fontweight='bold',
+                bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.82))
 
-    total_loss = values.sum()
-    ax.axhline(y=total_loss, color=C_BLUE, linestyle='--', linewidth=1.5, alpha=0.5, zorder=2)
-    ax.text(n - 0.5, total_loss + max_val * 0.025,
-            f'合计 ¥{total_loss:,.0f}万', fontsize=12, color=C_BLUE, fontweight='bold')
+    # 总损失标注在最后一根柱子上方
+    ax.annotate(
+        f'  合计 ¥{total_loss:,.0f}万',
+        xy=(n - 1, total_loss),
+        xytext=(n - 1, total_loss + max_val * 0.18),
+        fontsize=12, color=C_BLUE, fontweight='bold',
+        arrowprops=dict(arrowstyle='->', color=C_BLUE, alpha=0.6, lw=1.5),
+        ha='center',
+    )
 
     ax.set_xticks(range(n))
     ax.set_xticklabels(labels, fontsize=11)
-    ax.set_title('各环节年度损失金额估算', fontsize=17, pad=22)
+    ax.set_title('各环节年度损失金额 — 瀑布累积图', fontsize=17, pad=22)
     ax.set_ylabel('损失金额 (万元)', fontsize=12, labelpad=10)
-    ax.set_ylim(0, max_val * 1.55)
+    ax.set_ylim(0, total_loss + max_val * 0.35)
+    ax.set_xlim(-0.6, n - 0.4)
     ax.tick_params(left=False, bottom=False)
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f'{x:,.0f}'))
-    fig.subplots_adjust(left=0.10, right=0.95, top=0.92, bottom=0.10)
+    ax.legend(fontsize=11, framealpha=0.9, edgecolor=CL_GREY, loc='upper left')
+    fig.subplots_adjust(left=0.10, right=0.92, top=0.92, bottom=0.12)
     _save(fig, '04_loss_waterfall')
 
 
@@ -498,8 +543,11 @@ def plot_churn_by_channel(churn_matrix: 'pd.DataFrame') -> None:
               title_fontsize=11, framealpha=0.9, edgecolor=CL_GREY)
     ax.invert_yaxis()
     ax.tick_params(left=False, bottom=False)
-    ax.set_xlim(0, pivot.values.sum(axis=1).max() * 1.12)
+    ax.set_xlim(0, pivot.values.max() * 1.20)
     ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f'{v:.0f}%'))
+    for container in ax.containers:
+        ax.bar_label(container, fmt='%.1f%%', label_type='edge',
+                     fontsize=9, padding=4, color=C_DARK)
     fig.tight_layout()
     _save(fig, '09_churn_by_channel')
 
@@ -508,87 +556,43 @@ def plot_churn_by_channel(churn_matrix: 'pd.DataFrame') -> None:
 # 10 — PIE 优先级矩阵
 # ═══════════════════════════════════════════════════════════
 def plot_pie_matrix(pie_df: 'pd.DataFrame') -> None:
-    fig, ax = plt.subplots(figsize=(11, 8))
+    """PIE 优先级矩阵 — 气泡图 (X=Potential, Y=Importance, 大小=PIE)"""
+    fig, ax = plt.subplots(figsize=(10, 7))
     x = pie_df['Potential'].values
     y = pie_df['Importance'].values
-    sizes = pie_df['PIE得分'].values * 4
-    ease = pie_df['Ease'].values
-    pie_labels = [l.replace(' → ', ' →\n') for l in pie_df['漏斗环节']]
+    sizes = pie_df['PIE得分'].values * 5
+    pie_labels = [l.replace(' → ', '→') for l in pie_df['漏斗环节']]
     pie_scores = pie_df['PIE得分'].values.astype(int)
+    ease_vals = pie_df['Ease'].values.astype(int)
 
-    scatter = ax.scatter(x, y, s=sizes, c=ease, cmap='RdYlGn',
-                         vmin=5, vmax=9, alpha=0.85,
-                         edgecolors=C_DARK, linewidth=1.2, zorder=4)
+    # 简化：单色气泡 + 大小编码 PIE（移除颜色维度，PIE=Ease×P×I 已综合三者）
+    ax.scatter(x, y, s=sizes, c=C_BLUE, alpha=0.65,
+               edgecolors=C_DARK, linewidth=1.0, zorder=4)
 
-    for i, label in enumerate(pie_labels):
-        ax.annotate(f'{label}\nPIE={pie_scores[i]}',
-                    (x[i], y[i]),
-                    textcoords='offset points', xytext=(0, 22),
-                    ha='center', fontsize=9.5, fontweight='bold', color=C_DARK,
-                    bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
-                              edgecolor=CL_GREY, alpha=0.85))
+    for rank, (xi, yi, label, score, e) in enumerate(zip(x, y, pie_labels, pie_scores, ease_vals), 1):
+        ax.annotate(f'#{rank} {label}\nPIE={score} (Ease={e})',
+                    (xi, yi), textcoords='offset points', xytext=(0, 12),
+                    ha='center', fontsize=9, fontweight='bold', color=C_DARK)
 
-    ax.axhline(y=5, color=C_GREY, linestyle=':', alpha=0.25, zorder=1)
-    ax.axvline(x=5, color=C_GREY, linestyle=':', alpha=0.25, zorder=1)
+    # 象限分割线
+    ax.axhline(y=5, color=C_GREY, linestyle=':', alpha=0.4, zorder=1)
+    ax.axvline(x=5, color=C_GREY, linestyle=':', alpha=0.4, zorder=1)
+    # 右上象限标注
+    ax.text(10, 10.5, '优先投入', ha='right', fontsize=9, color=C_GREY, alpha=0.6)
+    ax.text(0.5, 0.5, '暂缓', ha='left', fontsize=9, color=C_GREY, alpha=0.6)
 
-    cbar = plt.colorbar(scatter, ax=ax, shrink=0.8, pad=0.02)
-    cbar.set_label('优化容易度 (Ease)', fontsize=11, labelpad=8)
-
-    ax.set_xlabel('损失潜力 (Potential)', fontsize=12, labelpad=10)
-    ax.set_ylabel('流量重要性 (Importance)', fontsize=12, labelpad=10)
-    ax.set_title('PIE 优先级矩阵 (气泡大小 = PIE 得分)', fontsize=16, pad=18)
+    ax.set_xlabel('损失潜力 (Potential)', fontsize=12)
+    ax.set_ylabel('流量重要性 (Importance)', fontsize=12)
+    ax.set_title('PIE 优先级矩阵', fontsize=15, pad=14)
     ax.set_xlim(0, 11)
     ax.set_ylim(0, 11)
-    ax.grid(True, alpha=0.25, linestyle='-', color='#DDE1E6')
     ax.tick_params(left=False, bottom=False)
     fig.tight_layout()
     _save(fig, '10_pie_matrix')
 
 
 # ═══════════════════════════════════════════════════════════
-# 11 — A/B 实验对比
-# ═══════════════════════════════════════════════════════════
-def plot_ab_test(groups_df: 'pd.DataFrame') -> None:
-    fig, ax = plt.subplots(figsize=(9, 6))
-    g = groups_df.reset_index()
-    palette = ['#A0AAB5', '#5B9BD5', '#4CAF82']
-    colors = [palette[i % len(palette)] for i in range(len(g))]
-    bars = ax.bar(g['experiment_group'], g['转化率(%)'], width=0.45,
-                  color=colors, edgecolor='white', linewidth=1.5, zorder=3)
-
-    control_rate = groups_df.loc['Control', '转化率(%)']
-    max_rate = max(g['转化率(%)'])
-    for bar, (_, row) in zip(bars, g.iterrows()):
-        rate = row['转化率(%)']
-        sessions = row['会话数']
-        label_top = f'{rate:.2f}%'
-        if row['experiment_group'] != 'Control':
-            lift = (rate - control_rate) / control_rate * 100
-            label_top += f'  (lift {lift:+.1f}%)'
-
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.25,
-                label_top, ha='center', fontsize=13, fontweight='bold', color=C_DARK)
-
-        sig_note = '不显著' if row['experiment_group'] != 'Control' else ''
-        sample_note = f'n = {sessions:,}'
-        if sig_note:
-            sample_note += f'  [{sig_note}]'
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 1.2,
-                sample_note, ha='center', fontsize=10, color=C_GREY)
-
-    ax.set_title('A/B 实验 — 各组转化率对比\n'
-                 '(Control 占 97.8% 样本，Variant 组差异不显著)',
-                 fontsize=14, pad=18)
-    ax.set_ylabel('转化率 (%)', fontsize=12, labelpad=10)
-    ax.set_ylim(0, max_rate * 1.28)
-    ax.tick_params(left=False, bottom=False)
-    ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f'{v:.1f}%'))
-    fig.tight_layout()
-    _save(fig, '11_ab_test')
-
-
-# ═══════════════════════════════════════════════════════════
-# 12 — 品类双阶段转化率
+# 11 — 品类双阶段转化率
 # ═══════════════════════════════════════════════════════════
 def plot_category_funnel(cat_df: 'pd.DataFrame') -> None:
     fig, ax = plt.subplots(figsize=(13, 6.5))
@@ -619,11 +623,11 @@ def plot_category_funnel(cat_df: 'pd.DataFrame') -> None:
     ax.tick_params(left=False, bottom=False)
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f'{v:.0f}%'))
     fig.tight_layout()
-    _save(fig, '12_category_funnel')
+    _save(fig, '11_category_funnel')
 
 
 # ═══════════════════════════════════════════════════════════
-# 13 — 严格漏斗 vs 覆盖分析 对比
+# 12 — 严格漏斗 vs 覆盖分析 对比
 # ═══════════════════════════════════════════════════════════
 def plot_strict_vs_coverage(strict_df: 'pd.DataFrame') -> None:
     """严格路径漏斗 vs 页面覆盖分析 双柱对比
@@ -687,11 +691,11 @@ def plot_strict_vs_coverage(strict_df: 'pd.DataFrame') -> None:
     ax.tick_params(left=False, bottom=False)
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f'{v/1000:.0f}K'))
     fig.tight_layout()
-    _save(fig, '13_strict_vs_coverage')
+    _save(fig, '12_strict_vs_coverage')
 
 
 # ═══════════════════════════════════════════════════════════
-# 14 — 深链 vs 首页路径 转化率对比
+# 13 — 深链 vs 首页路径 转化率对比
 # ═══════════════════════════════════════════════════════════
 def plot_deep_link_comparison(path_summary: 'pd.DataFrame',
                               channel_comparison: 'pd.DataFrame') -> None:
@@ -758,11 +762,11 @@ def plot_deep_link_comparison(path_summary: 'pd.DataFrame',
 
     fig.suptitle('深链流量分析', fontsize=18, fontweight='bold', color=C_DARK, y=1.02)
     fig.tight_layout()
-    _save(fig, '14_deep_link_analysis')
+    _save(fig, '13_deep_link_analysis')
 
 
 # ═══════════════════════════════════════════════════════════
-# 15 — 新用户 vs 老用户 漏斗对比
+# 14 — 新用户 vs 老用户 漏斗对比
 # ═══════════════════════════════════════════════════════════
 def plot_new_vs_returning(nr_results: dict) -> None:
     """新用户 vs 老用户 页面+行为漏斗 四象限对比"""
@@ -827,11 +831,11 @@ def plot_new_vs_returning(nr_results: dict) -> None:
         fontsize=17, fontweight='bold', color=C_DARK, y=1.01,
     )
     fig.tight_layout()
-    _save(fig, '15_new_vs_returning')
+    _save(fig, '14_new_vs_returning')
 
 
 # ═══════════════════════════════════════════════════════════
-# 16 — 周末 vs 工作日 转化率对比
+# 15 — 周末 vs 工作日 转化率对比
 # ═══════════════════════════════════════════════════════════
 def plot_weekend_comparison(weekend_df: 'pd.DataFrame') -> None:
     """周末 vs 工作日 关键指标对比"""
@@ -873,11 +877,11 @@ def plot_weekend_comparison(weekend_df: 'pd.DataFrame') -> None:
         fontsize=16, fontweight='bold', color=C_DARK, y=1.02,
     )
     fig.tight_layout()
-    _save(fig, '16_weekend_comparison')
+    _save(fig, '15_weekend_comparison')
 
 
 # ═══════════════════════════════════════════════════════════
-# 17 — Cohort 留存热力图
+# 16 — Cohort 留存热力图
 # ═══════════════════════════════════════════════════════════
 def plot_cohort_heatmap(retention_matrix: 'pd.DataFrame') -> None:
     """Cohort 留存热力图 — 行=首次购买月份, 列=月差, 值=留存率(%)"""
@@ -906,8 +910,9 @@ def plot_cohort_heatmap(retention_matrix: 'pd.DataFrame') -> None:
         for j in range(cols):
             val = data[i, j]
             if not np.isnan(val) and val > 0:
-                text_color = 'white' if val > 60 else C_DARK
-                ax.text(j, i, f'{val:.0f}%', ha='center', va='center',
+                # 高于 65% 的深绿背景用白色文字确保可读性
+                text_color = 'white' if val > 65 else C_DARK
+                ax.text(j, i, f'{val:.1f}%', ha='center', va='center',
                         fontsize=9, fontweight='bold', color=text_color)
 
     ax.set_xticks(range(cols))
@@ -924,4 +929,4 @@ def plot_cohort_heatmap(retention_matrix: 'pd.DataFrame') -> None:
     ax.set_xlabel('距首次购买的月数', fontsize=12, labelpad=10)
     ax.set_ylabel('首次购买月份 (Cohort)', fontsize=12, labelpad=10)
     fig.tight_layout()
-    _save(fig, '17_cohort_heatmap')
+    _save(fig, '16_cohort_heatmap')

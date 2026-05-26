@@ -79,7 +79,7 @@ def build_session_attributes(events: pd.DataFrame, customers: pd.DataFrame) -> p
     # 会话级聚合
     session_attr = events.groupby('session_id').agg(
         customer_id=('customer_id', 'first'),
-        traffic_source=('traffic_source', lambda x: x.mode().iloc[0] if not x.mode().empty else x.iloc[0]),
+        traffic_source=('traffic_source', lambda x: x.mode().iloc[0] if len(x.mode()) > 0 else x.iloc[0]),
         device_type=('device_type', lambda x: x.mode().iloc[0] if not x.mode().empty else x.iloc[0]),
         experiment_group=('experiment_group', 'first'),
         campaign_id=('campaign_id', 'first'),
@@ -124,38 +124,40 @@ def build_funnel_wide(events: pd.DataFrame, session_attr: pd.DataFrame,
     logger.info("5. 构建漏斗宽表")
     logger.info("=" * 60)
 
-    # ── 页面级漏斗：按 page_category ──
-    home_sessions = set(events[events['page_category'] == 'Home']['session_id'].unique())
-    plp_sessions = set(events[events['page_category'] == 'PLP']['session_id'].unique())
-    pdp_sessions = set(events[events['page_category'] == 'PDP']['session_id'].unique())
-    cart_sessions = set(events[events['page_category'] == 'Cart']['session_id'].unique())
-    checkout_sessions = set(events[events['page_category'] == 'Checkout']['session_id'].unique())
-
-    # ── 行为级漏斗：按 event_type ──
-    view_sessions = set(events[events['event_type'] == 'view']['session_id'].unique())
-    click_sessions = set(events[events['event_type'] == 'click']['session_id'].unique())
-    add_cart_sessions = set(events[events['event_type'] == 'add_to_cart']['session_id'].unique())
-    purchase_sessions = set(events[events['event_type'] == 'purchase']['session_id'].unique())
-
     # 构建宽表
     funnel_wide = session_attr.copy()
 
-    # 页面漏斗标记
-    funnel_wide['step1_home'] = funnel_wide['session_id'].isin(home_sessions).astype(int)
-    funnel_wide['step2_plp'] = funnel_wide['session_id'].isin(plp_sessions).astype(int)
-    funnel_wide['step3_pdp'] = funnel_wide['session_id'].isin(pdp_sessions).astype(int)
-    funnel_wide['step4_cart'] = funnel_wide['session_id'].isin(cart_sessions).astype(int)
-    funnel_wide['step5_checkout'] = funnel_wide['session_id'].isin(checkout_sessions).astype(int)
+    # 页面漏斗 + 行为漏斗 + bounce 标记 — 2 次 crosstab 替代 10 次 set 扫描
+    page_matrix = (
+        pd.crosstab(events['session_id'], events['page_category'])
+        .gt(0).astype(int)
+        .rename(columns={
+            'Home': 'step1_home', 'PLP': 'step2_plp', 'PDP': 'step3_pdp',
+            'Cart': 'step4_cart', 'Checkout': 'step5_checkout',
+        })
+        .reset_index()
+    )
+    event_matrix = (
+        pd.crosstab(events['session_id'], events['event_type'])
+        .gt(0).astype(int)
+        .rename(columns={
+            'view': 'step_view', 'click': 'step_click',
+            'add_to_cart': 'step_add_cart', 'purchase': 'step_purchase',
+            'bounce': 'is_bounced',
+        })
+        .reset_index()
+    )
+    funnel_wide = funnel_wide.merge(page_matrix, on='session_id', how='left')
+    funnel_wide = funnel_wide.merge(event_matrix, on='session_id', how='left')
 
-    # 行为漏斗标记
-    funnel_wide['step_view'] = funnel_wide['session_id'].isin(view_sessions).astype(int)
-    funnel_wide['step_click'] = funnel_wide['session_id'].isin(click_sessions).astype(int)
-    funnel_wide['step_add_cart'] = funnel_wide['session_id'].isin(add_cart_sessions).astype(int)
-    funnel_wide['step_purchase'] = funnel_wide['session_id'].isin(purchase_sessions).astype(int)
-
-    # 添加 bounce 标记
-    bounce_sessions = set(events[events['event_type'] == 'bounce']['session_id'].unique())
-    funnel_wide['is_bounced'] = funnel_wide['session_id'].isin(bounce_sessions).astype(int)
+    # 填充未匹配的 session_id（0 = 未到达该页面/未发生该事件）
+    step_cols = ['step1_home', 'step2_plp', 'step3_pdp', 'step4_cart', 'step5_checkout',
+                 'step_view', 'step_click', 'step_add_cart', 'step_purchase', 'is_bounced']
+    for col in step_cols:
+        if col not in funnel_wide.columns:
+            funnel_wide[col] = 0
+        else:
+            funnel_wide[col] = funnel_wide[col].fillna(0).astype(int)
 
     # 关联交易数据 — 注意: transactions 无 session_id，只能聚合到 customer 级
     # 过滤缺失 product_id/gross_revenue 的交易（10,449条，占 10.1%）

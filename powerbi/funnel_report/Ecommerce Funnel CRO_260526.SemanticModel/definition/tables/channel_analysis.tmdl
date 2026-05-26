@@ -1,0 +1,51 @@
+table channel_analysis
+	lineageTag: f025d7d0-0a96-40a8-9908-98a790fccf02
+
+	column traffic_source
+		dataType: string
+		lineageTag: bbf97fd6-be06-4015-9921-42f4c1b68b12
+		summarizeBy: none
+		sourceColumn: traffic_source
+
+		annotation SummarizationSetBy = Automatic
+
+	column sessions
+		dataType: int64
+		formatString: 0
+		lineageTag: 9542b7a5-d4b5-4433-b5fe-b6d6ad4ded11
+		summarizeBy: sum
+		sourceColumn: sessions
+
+		annotation SummarizationSetBy = Automatic
+
+	column purchases
+		dataType: int64
+		formatString: 0
+		lineageTag: a8bef131-0ae4-4eb0-a43e-adcc4d1382ba
+		summarizeBy: sum
+		sourceColumn: purchases
+
+		annotation SummarizationSetBy = Automatic
+
+	column conversion_rate
+		dataType: double
+		lineageTag: c70745cb-0cb1-4a54-8497-6caccfd2e441
+		summarizeBy: sum
+		sourceColumn: conversion_rate
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition channel_analysis = m
+		mode: import
+		source =
+				let
+				    源 = Csv.Document(File.Contents("D:\D30360\Documents\ecommerce_funnel_analysis\powerbi\data\channel_analysis.csv"),[Delimiter=",", Columns=4, Encoding=65001, QuoteStyle=QuoteStyle.None]),
+				    提升的标题 = Table.PromoteHeaders(源, [PromoteAllScalars=true]),
+				    更改的类型 = Table.TransformColumnTypes(提升的标题,{{"traffic_source", type text}, {"sessions", Int64.Type}, {"purchases", Int64.Type}, {"conversion_rate", type number}})
+				in
+				    更改的类型
+
+	annotation PBI_ResultType = Table
+

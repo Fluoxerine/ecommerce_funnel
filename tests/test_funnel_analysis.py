@@ -13,26 +13,36 @@ def _make_wide_df(n: int = 100) -> pd.DataFrame:
     """构造漏斗宽表测试数据，保证漏斗逻辑一致性"""
     np.random.seed(42)
     base_date = pd.Timestamp('2023-01-01')
+    # 使用更接近真实电商的偏态分布（非均匀）
+    # total_duration_sec: Gamma(2, 100) — 多数会话短，少数很长
+    # event_count: Poisson(4) + 1 — 离散计数，右偏
+    # total_revenue: LogNormal(4.5, 0.8) — 电商客单价，右偏长尾
+    # total_transactions: Poisson(0.8) — 多数用户 0-1 单
     data = {
         'session_id': [f's{i}' for i in range(n)],
         'customer_id': [f'u{i}' for i in range(n)],
         'traffic_source': np.random.choice(
-            ['Organic', 'Paid Search', 'Social', 'Email', 'Direct'], n),
-        'device_type': np.random.choice(['desktop', 'mobile', 'tablet'], n),
+            ['Organic', 'Paid Search', 'Social', 'Email', 'Direct'], n,
+            p=[0.40, 0.20, 0.15, 0.10, 0.15]),
+        'device_type': np.random.choice(['desktop', 'mobile', 'tablet'], n,
+                                        p=[0.50, 0.40, 0.10]),
         'experiment_group': np.random.choice(['Control', 'Variant_A', 'Variant_B'], n),
-        'total_duration_sec': np.random.uniform(10, 600, n),
-        'event_count': np.random.randint(2, 20, n),
+        'total_duration_sec': np.random.gamma(2, 100, n).clip(5, 1200),
+        'event_count': (np.random.poisson(4, n) + 1).clip(1, 50),
         'hour': np.random.randint(0, 24, n),
         'weekday': np.random.randint(0, 7, n),
-        'year': np.random.choice([2021, 2022, 2023], n),
+        'year': np.random.choice([2021, 2022, 2023], n, p=[0.45, 0.35, 0.20]),
         'month': np.random.randint(1, 13, n),
-        'has_refund': np.random.choice([0, 1], n, p=[0.95, 0.05]),
-        'total_revenue': np.random.uniform(50, 500, n),
-        'total_transactions': np.random.randint(0, 5, n),
-        'loyalty_tier': np.random.choice(['Bronze', 'Silver', 'Gold', 'Platinum'], n),
-        'country': np.random.choice(['US', 'UK', 'IN', 'BR', 'CA'], n),
+        'has_refund': np.random.choice([0, 1], n, p=[0.97, 0.03]),
+        'total_revenue': np.random.lognormal(4.5, 0.8, n),
+        'total_transactions': np.random.poisson(0.8, n),
+        'loyalty_tier': np.random.choice(
+            ['Bronze', 'Silver', 'Gold', 'Platinum'], n, p=[0.50, 0.30, 0.15, 0.05]),
+        'country': np.random.choice(['US', 'UK', 'IN', 'BR', 'CA'], n,
+                                    p=[0.35, 0.20, 0.20, 0.15, 0.10]),
         'acquisition_channel': np.random.choice(
-            ['Organic', 'Paid Search', 'Social', 'Email', 'Referral'], n),
+            ['Organic', 'Paid Search', 'Social', 'Email', 'Referral'], n,
+            p=[0.35, 0.25, 0.15, 0.10, 0.15]),
         'session_start': [base_date + pd.Timedelta(days=i) for i in range(n)],
     }
 
@@ -191,7 +201,8 @@ class TestChurnFeatures:
     def test_required_keys(self):
         wide = _make_wide_df()
         results = compute_churn_features(wide)
-        required = ['流失环节', '特征', '流失组均值', '转化组均值', 'p值', '显著性', 'Cohens_d']
+        required = ['流失环节', '特征', '流失组均值', '转化组均值', 'p值',
+                    '显著性(未校正)', '显著性(Bonferroni)', 'Cohens_d']
         for r in results:
             for key in required:
                 assert key in r

@@ -28,18 +28,7 @@ FROM user_events ue
 GROUP BY ue.device_type
 ORDER BY conversion_rate DESC;
 
--- ── 4.3 实验分组对比 ─────────────────────────────────
-SELECT '=== A/B Test Groups ===' AS section;
-SELECT
-    ue.experiment_group,
-    COUNT(DISTINCT ue.session_id) AS sessions,
-    COUNT(DISTINCT CASE WHEN ue.event_type = 'purchase' THEN ue.session_id END) AS purchases,
-    ROUND(COUNT(DISTINCT CASE WHEN ue.event_type = 'purchase' THEN ue.session_id END)
-        / COUNT(DISTINCT ue.session_id) * 100, 2) AS conversion_rate
-FROM user_events ue
-GROUP BY ue.experiment_group;
-
--- ── 4.4 国家维度 ────────────────────────────────────
+-- ── 4.3 国家维度 ────────────────────────────────────
 SELECT '=== Conversion by Country ===' AS section;
 SELECT
     c.country,
@@ -53,7 +42,7 @@ GROUP BY c.country
 HAVING sessions > 1000
 ORDER BY conversion_rate DESC;
 
--- ── 4.5 忠诚度维度 ──────────────────────────────────
+-- ── 4.4 忠诚度维度 ──────────────────────────────────
 SELECT '=== Conversion by Loyalty Tier ===' AS section;
 SELECT
     c.loyalty_tier,

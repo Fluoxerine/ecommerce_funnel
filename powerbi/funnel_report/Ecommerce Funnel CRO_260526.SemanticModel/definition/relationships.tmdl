@@ -1,0 +1,48 @@
+relationship AutoDetected_0e8a1d73-9c24-4696-9421-2344647788cb
+	fromColumn: funnel_overview.traffic_source
+	toColumn: channel_analysis.traffic_source
+
+relationship AutoDetected_b2dc4362-cd49-4cf0-b268-afbfb1257182
+	fromColumn: funnel_overview.country
+	toColumn: country_analysis.country
+
+relationship b8df4b2f-517e-4a4d-b58f-31637cab5947
+	joinOnDateBehavior: datePartOnly
+	fromColumn: funnel_wide_export.session_start
+	toColumn: LocalDateTable_4ac0f738-8658-4156-83e4-28dd43820a35.Date
+
+relationship 9367e249-7ab2-480d-b56f-20b24ca55acb
+	joinOnDateBehavior: datePartOnly
+	fromColumn: funnel_wide_export.session_end
+	toColumn: LocalDateTable_a72cd027-42a9-4de1-a6c1-a249ab65e58d.Date
+
+relationship 066032c5-83ef-4e95-98d7-00f2165649ba
+	joinOnDateBehavior: datePartOnly
+	fromColumn: funnel_wide_export.date
+	toColumn: LocalDateTable_7850d97f-3f1a-4124-9985-a7de79d0cfcb.Date
+
+relationship 14dfe378-c69b-4bad-b718-a30b8725880b
+	joinOnDateBehavior: datePartOnly
+	fromColumn: funnel_wide_export.signup_date
+	toColumn: LocalDateTable_c2949045-e10f-4d5b-84e3-9efca589953e.Date
+
+relationship 5c28a575-7d65-4df7-81b7-3ab5631077ce
+	joinOnDateBehavior: datePartOnly
+	fromColumn: funnel_wide_export.first_purchase_date
+	toColumn: LocalDateTable_74df79b9-ac68-421b-a5f1-801cf21beadd.Date
+
+relationship AutoDetected_c4f4a966-d4ab-464d-9af6-c8f6b154f8f0
+	fromColumn: funnel_wide_export.traffic_source
+	toColumn: channel_analysis.traffic_source
+
+relationship AutoDetected_0843731d-5eeb-4f26-bae8-2808dbaa58c8
+	fromColumn: funnel_wide_export.country
+	toColumn: country_analysis.country
+
+relationship AutoDetected_9f21df58-79bf-48aa-a64c-776af54dcbd2
+	isActive: false
+	crossFilteringBehavior: bothDirections
+	fromCardinality: one
+	fromColumn: funnel_overview.session_id
+	toColumn: funnel_wide_export.session_id
+

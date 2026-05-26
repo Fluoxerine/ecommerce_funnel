@@ -1,0 +1,28 @@
+model Model
+	culture: zh-CN
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: zh-CN
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["channel_analysis","country_analysis","device_analysis","funnel_overview","funnel_wide_export"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table channel_analysis
+ref table country_analysis
+ref table device_analysis
+ref table funnel_overview
+ref table funnel_wide_export
+ref table DateTableTemplate_6525ab00-15d0-4b5b-a796-54125fc8d34e
+ref table LocalDateTable_4ac0f738-8658-4156-83e4-28dd43820a35
+ref table LocalDateTable_a72cd027-42a9-4de1-a6c1-a249ab65e58d
+ref table LocalDateTable_7850d97f-3f1a-4124-9985-a7de79d0cfcb
+ref table LocalDateTable_c2949045-e10f-4d5b-84e3-9efca589953e
+ref table LocalDateTable_74df79b9-ac68-421b-a5f1-801cf21beadd
+
+ref cultureInfo zh-CN
+
