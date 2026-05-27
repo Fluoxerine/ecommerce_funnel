@@ -115,15 +115,7 @@ STRATEGY_ROI = {
     },
 }
 
-# ── 颜色方案 ──────────────────────────────────────────
-FUNNEL_COLORS = ['#DB3124', '#FC8C5A', '#FFDF92', '#90BEE0', '#4B74B2']
-CHANNEL_COLORS = {
-    'Organic': '#2E86AB', 'Paid Search': '#A23B72',
-    'Social': '#F18F01', 'Email': '#C73E1D', 'Direct': '#27AE60',
-}
-DEVICE_COLORS = {'desktop': '#27AE60', 'mobile': '#3498DB', 'tablet': '#9B59B6'}
-PRIMARY = '#2E86AB'
-ACCENT = '#E74C3C'
+# ── 颜色方案 (统一在 visualization.py 中定义 Wong 2011 色盲友好调色板) ──
 
 # ── 日志配置 ──────────────────────────────────────────
 LOG_FORMAT = '%(asctime)s [%(levelname)s] %(name)s: %(message)s'

@@ -34,6 +34,8 @@ from python.visualization import (
     plot_churn_by_channel, plot_pie_matrix, plot_category_funnel,
     plot_strict_vs_coverage, plot_deep_link_comparison,
     plot_new_vs_returning, plot_weekend_comparison, plot_cohort_heatmap,
+    plot_page_funnel_interactive, plot_event_funnel_interactive,
+    plot_strict_page_funnel, plot_strict_page_funnel_interactive,
     set_chart_meta,
 )
 from python.data_loader import load_all_tables
@@ -159,7 +161,7 @@ def _run_visualization(funnel_wide, cleaning_stats, stage3, loss_df, pie_df,
     set_chart_meta(len(funnel_wide))
     t_viz = time.time()
     logger.info("=" * 60)
-    logger.info("生成可视化图表 (17 张)")
+    logger.info("生成可视化图表 (23 张: 20 静态 PNG + 3 交互式 HTML)")
     logger.info("=" * 60)
 
     plots = [
@@ -182,8 +184,19 @@ def _run_visualization(funnel_wide, cleaning_stats, stage3, loss_df, pie_df,
         ('14_new_vs_returning', plot_new_vs_returning, stage3['nr_results']),
         ('15_weekend_comparison', plot_weekend_comparison, stage3['weekend_df']),
         ('16_cohort_heatmap', plot_cohort_heatmap, stage3['cohort_retention']),
+        # 严格路径漏斗
+        ('01b_strict_page_funnel', plot_strict_page_funnel, stage3['strict_funnel']),
     ]
     for name, fn, *args in plots:
+        _safe_plot(fn, name, *args)
+
+    # 交互式漏斗图 (plotly HTML)
+    interactive_plots = [
+        ('01_page_funnel_interactive', plot_page_funnel_interactive, stage3['page_funnel']),
+        ('01b_strict_page_funnel_interactive', plot_strict_page_funnel_interactive, stage3['strict_funnel']),
+        ('02_event_funnel_interactive', plot_event_funnel_interactive, stage3['event_funnel']),
+    ]
+    for name, fn, *args in interactive_plots:
         _safe_plot(fn, name, *args)
 
     logger.info("可视化生成完成 (%.1fs)", time.time() - t_viz)

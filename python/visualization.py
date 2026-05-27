@@ -4,10 +4,10 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import matplotlib.ticker as mticker
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.patches import Polygon
 import numpy as np
-from python.config import (
-    FUNNEL_COLORS, PRIMARY, ACCENT, CHART_DIR, logger,
-)
+from python.config import CHART_DIR, logger
 
 # ── 中文字体 ────────────────────────────────────────
 _font_candidates = [
@@ -45,6 +45,11 @@ plt.rcParams.update({
     'legend.fontsize': 10,
 })
 
+# ── 共享标签常量 ────────────────────────────────────
+PAGE_SHORT_LABELS = ['首页', '列表页', '详情页', '购物车', '结算页']
+EVENT_SHORT_LABELS = ['浏览', '点击', '加购', '购买']
+DEVICE_CN_LABELS = ['手机', '桌面', '平板']
+
 # ── 统一调色板 (Wong 2011 色盲友好) ──────────────
 C_BLUE   = '#0072B2'
 C_ORANGE = '#E69F00'
@@ -65,7 +70,27 @@ CL_GREY   = '#DDE1E6'
 
 DURATION_COLORS = ['#0072B2', '#E69F00', '#56B4E9', '#009E73']
 STAGE_COLORS    = ['#0072B2', '#56B4E9', '#009E73', '#CC79A7']
-CHANNEL_COLORS_5 = ['#0072B2', '#CC79A7', '#E69F00', '#D55E00', '#009E73']
+
+# 渠道 → 颜色映射 (与 Wong 2011 主色系协调)
+CHANNEL_COLORS_MAP = {
+    'Organic': '#3A7CA5', 'Paid Search': '#B8456E', 'Social': '#E8934B',
+    'Email': '#D64545', 'Direct': '#4CAF82',
+}
+
+# ── 预构建 colormap (模块级复用) ──────────────────
+CMAP_RDYLGN = LinearSegmentedColormap.from_list(
+    'custom_rdylgn',
+    ['#D64545', '#E8934B', '#F2D398', '#E8ECCA', '#4CAF82'],
+    N=256,
+)
+CMAP_RETENTION = LinearSegmentedColormap.from_list(
+    'retention_green',
+    ['#F5F5F5', '#C4E8D4', '#4CAF82', '#2D7A4A'],
+    N=256,
+)
+
+# ── 漏斗图专用色板 (深→浅蓝渐变) ─────────────────
+FUNNEL_PALETTE = ['#1B4F72', '#2874A6', '#2E86C1', '#5499C7', '#85C1E9', '#AED6F1']
 
 # 全局图表元信息 — 绘图前由 main.py 设置
 _CHART_META: dict[str, int] = {}
@@ -85,8 +110,72 @@ def _save(fig, name: str) -> None:
              color='#999999', transform=fig.transFigure)
     fig.savefig(str(CHART_DIR / f'{name}.png'), dpi=180, bbox_inches='tight',
                 facecolor=fig.get_facecolor(), edgecolor='none')
-    plt.close('all')
+    plt.close(fig)
     logger.info("  Saved: %s", (CHART_DIR / f'{name}.png').name)
+
+
+def _draw_funnel_polygons(ax, labels, values, rate_labels, colors, max_val=None, power=1.0):
+    """用梯形 Polygon 绘制居中对齐的漏斗图。
+
+    每层宽度按 value/max_val 比例缩放，从上到下逐层变窄。
+    如遇下游值大于上游（深链倒挂），梯形会外扩以反映真实数据。
+
+    power < 1.0 时采用幂律压缩宽度，使尾端窄层不至于消失（如 0.3 可将
+    0.02% 的末层拉回 ~10% 宽度），标签仍显示原始数值。
+    """
+    n = len(labels)
+    arr = np.array(values, dtype=float)
+    if max_val is None:
+        max_val = float(np.max(arr))
+
+    # 幂律缩放后的宽度比例 (视觉宽度) — 标签始终显示原始值
+    if power != 1.0:
+        scaled = np.power(arr, power)
+        scaled_max = np.power(max_val, power)
+        width_ratios = scaled / scaled_max
+    else:
+        width_ratios = arr / max_val
+
+    stage_h = 1.0
+    gap = 0.28
+    max_hw = 5.2  # 最宽层的半宽度
+
+    current_y = 0.0
+    for i in range(n):
+        y_top = current_y
+        y_bottom = current_y - stage_h
+
+        top_hw = width_ratios[i] * max_hw
+        if i < n - 1:
+            bottom_hw = width_ratios[i + 1] * max_hw
+        else:
+            bottom_hw = top_hw * 0.12  # 末层收尖
+
+        verts = [
+            (-top_hw, y_top),
+            (top_hw, y_top),
+            (bottom_hw, y_bottom),
+            (-bottom_hw, y_bottom),
+        ]
+        poly = Polygon(verts, facecolor=colors[i], edgecolor='white',
+                       linewidth=2.5, zorder=3, alpha=0.92)
+        ax.add_patch(poly)
+
+        # 层名 + 原始数值标在梯形内部
+        mid_y = (y_top + y_bottom) / 2
+        inner_text = f'{labels[i]}\n{int(arr[i]):,}'
+        ax.text(0, mid_y + 0.08, inner_text, ha='center', va='center',
+                fontsize=11, fontweight='bold', color='white', zorder=5)
+
+        # 转化率标在梯形下方（间隙处）
+        ax.text(0, y_bottom - gap * 0.35, rate_labels[i], ha='center', va='top',
+                fontsize=10, color=C_DARK, zorder=5)
+
+        current_y = y_bottom - gap
+
+    ax.set_xlim(-max_hw * 1.18, max_hw * 1.18)
+    ax.set_ylim(current_y - 0.2, stage_h + 0.3)
+    ax.axis('off')
 
 
 # ═══════════════════════════════════════════════════════════
@@ -124,72 +213,81 @@ def plot_cleaning_funnel(cleaning_stats: dict) -> None:
 
 
 # ═══════════════════════════════════════════════════════════
-# 01 — 页面覆盖漏斗 (matplotlib)
+# 01 — 页面覆盖漏斗 (静态梯形)
 # ═══════════════════════════════════════════════════════════
 def plot_page_funnel(funnel_df: 'pd.DataFrame') -> None:
-    labels = funnel_df['漏斗阶段'].tolist()
+    labels = PAGE_SHORT_LABELS
     counts = funnel_df['到达会话数'].tolist()
+    overall_rates = funnel_df['整体到达率(%)'].tolist()
     rate_col = '交叉到达率(%)' if '交叉到达率(%)' in funnel_df.columns else '上一阶段转化率(%)'
     rates = funnel_df[rate_col].tolist()
-    overall_rates = funnel_df['整体到达率(%)'].tolist()
 
-    fig, ax = plt.subplots(figsize=(12, 7))
-    max_count = max(counts)
-    # 居中条形模拟漏斗: 条宽按比例缩放
-    widths = [c / max_count for c in counts]
-    y_pos = range(len(labels))
-
-    bars = ax.barh(y_pos, counts, height=0.6, color=STAGE_COLORS[:len(labels)],
-                   edgecolor='white', linewidth=1.5, zorder=3)
-    ax.set_yticks(y_pos)
-    ax.set_yticklabels(labels, fontsize=12)
-    ax.invert_yaxis()
-    ax.set_xlim(0, max_count * 1.3)
-    ax.tick_params(left=False)
-    ax.set_title('页面覆盖分析 (Page Coverage)\n各页面独立到达统计 | 交叉到达率 = 同时到达前后两页 / 到达前页',
-                 fontsize=14, pad=16)
-
-    for i, (bar, count, rate, ovr) in enumerate(zip(bars, counts, rates, overall_rates)):
+    rate_labels = []
+    for i, (rate, ovr) in enumerate(zip(rates, overall_rates)):
         if i == 0:
-            label = f'{count:,} 会话 ({ovr:.1f}%)'
+            rate_labels.append(f'整体到达率 {ovr:.1f}%')
         else:
-            label = f'{count:,} | 交叉到达率 {rate}% | 整体 {ovr:.1f}%'
-        ax.text(bar.get_width() + max_count * 0.012, bar.get_y() + bar.get_height() / 2,
-                label, va='center', fontsize=10, color=C_DARK)
-    ax.set_xlabel('')
+            rate_labels.append(f'交叉到达率 {rate:.1f}% | 整体 {ovr:.1f}%')
+
+    fig, ax = plt.subplots(figsize=(11, 8))
+    colors = FUNNEL_PALETTE[:len(labels)]
+    _draw_funnel_polygons(ax, labels, counts, rate_labels, colors)
+
+    ax.set_title('页面覆盖漏斗 (Page Coverage Funnel)\n各页面独立到达统计 · 梯形宽度 ∝ 到达会话数',
+                 fontsize=15, pad=24, color=C_DARK)
     fig.tight_layout()
     _save(fig, '01_page_funnel')
 
 
 # ═══════════════════════════════════════════════════════════
-# 02 — 行为级漏斗 (matplotlib)
+# 01b — 严格路径页面漏斗 (静态梯形)
+# ═══════════════════════════════════════════════════════════
+def plot_strict_page_funnel(strict_df: 'pd.DataFrame') -> None:
+    """严格路径漏斗 — 必须按 Home→PLP→PDP→Cart→Checkout 时间顺序访问"""
+    labels = PAGE_SHORT_LABELS
+    counts = strict_df['严格路径到达会话数'].tolist()
+    seq_rates = strict_df['顺序转化率(%)'].tolist()
+    retention_rates = strict_df['整体留存率(%)'].tolist()
+
+    rate_labels = []
+    for i, (sr, rr) in enumerate(zip(seq_rates, retention_rates)):
+        if i == 0:
+            rate_labels.append(f'整体留存率 {rr:.1f}%')
+        else:
+            rate_labels.append(f'顺序转化率 {sr:.1f}% | 留存率 {rr:.1f}%')
+
+    fig, ax = plt.subplots(figsize=(11, 8))
+    colors = ['#5B2C6F', '#7D3C98', '#A569BD', '#C39BD3', '#D7BDE2']
+    _draw_funnel_polygons(ax, labels, counts, rate_labels, colors, power=0.3)
+
+    ax.set_title('严格路径漏斗 (Strict Path Funnel)\n按时间顺序 Home→PLP→PDP→Cart→Checkout，人数必递减',
+                 fontsize=15, pad=24, color=C_DARK)
+    fig.tight_layout()
+    _save(fig, '01b_strict_page_funnel')
+
+
+# ═══════════════════════════════════════════════════════════
+# 02 — 行为级漏斗 (静态梯形)
 # ═══════════════════════════════════════════════════════════
 def plot_event_funnel(funnel_df: 'pd.DataFrame') -> None:
-    labels = funnel_df['漏斗阶段'].tolist()
+    labels = EVENT_SHORT_LABELS
     counts = funnel_df['会话数'].tolist()
     prev_rates = funnel_df['上一阶段转化率(%)'].tolist()
     total_rates = funnel_df['整体转化率(%)'].tolist()
 
-    fig, ax = plt.subplots(figsize=(12, 6.5))
-    max_count = max(counts)
-    y_pos = range(len(labels))
-
-    ax.barh(y_pos, counts, height=0.55, color=STAGE_COLORS[:len(labels)],
-            edgecolor='white', linewidth=1.5, zorder=3)
-    ax.set_yticks(y_pos)
-    ax.set_yticklabels(labels, fontsize=12)
-    ax.invert_yaxis()
-    ax.set_xlim(0, max_count * 1.35)
-    ax.tick_params(left=False)
-    ax.set_title('行为级转化漏斗\n浏览 → 点击 → 加购 → 购买', fontsize=14, pad=16)
-
-    for i, (count, pr, tr) in enumerate(zip(counts, prev_rates, total_rates)):
+    rate_labels = []
+    for i, (pr, tr) in enumerate(zip(prev_rates, total_rates)):
         if i == 0:
-            label = f'{count:,} 会话 ({tr:.1f}%)'
+            rate_labels.append(f'整体转化率 {tr:.1f}%')
         else:
-            label = f'{count:,} | 上阶段 {pr:.1f}% | 整体 {tr:.1f}%'
-        ax.text(count + max_count * 0.012, i, label, va='center', fontsize=10, color=C_DARK)
-    ax.set_xlabel('')
+            rate_labels.append(f'上阶段转化率 {pr:.1f}% | 整体 {tr:.1f}%')
+
+    fig, ax = plt.subplots(figsize=(10, 7.5))
+    colors = ['#1B4F72', '#2E86C1', '#5499C7', '#85C1E9']
+    _draw_funnel_polygons(ax, labels, counts, rate_labels, colors)
+
+    ax.set_title('行为级转化漏斗 (Event Funnel)\n浏览 → 点击 → 加购 → 购买',
+                 fontsize=15, pad=24, color=C_DARK)
     fig.tight_layout()
     _save(fig, '02_event_funnel')
 
@@ -199,14 +297,11 @@ def plot_event_funnel(funnel_df: 'pd.DataFrame') -> None:
 # ═══════════════════════════════════════════════════════════
 def plot_channel_funnels(channel_funnels: dict[str, 'pd.DataFrame']) -> None:
     fig = plt.figure(figsize=(22, 13))
-    colors_map = {'Organic': '#3A7CA5', 'Paid Search': '#B8456E', 'Social': '#E8934B',
-                  'Email': '#D64545', 'Direct': '#4CAF82'}
-    short_labels = ['首页', '列表页', '详情页', '购物车', '结算页']
 
-    # 兼容新旧列名
+    first_df = next(iter(channel_funnels.values()))
     _rate_col = next(
-        c for c in ['交叉到达率(%)', '上一阶段转化率(%)']
-        if c in next(iter(channel_funnels.values())).columns
+        (c for c in ['交叉到达率(%)', '上一阶段转化率(%)'] if c in first_df.columns),
+        '交叉到达率(%)',
     )
     sorted_channels = sorted(channel_funnels.keys(),
                              key=lambda ch: channel_funnels[ch].iloc[-1][_rate_col],
@@ -215,7 +310,7 @@ def plot_channel_funnels(channel_funnels: dict[str, 'pd.DataFrame']) -> None:
     for i, ch in enumerate(sorted_channels):
         ax = fig.add_subplot(2, 3, i + 1)
         df = channel_funnels[ch]
-        full_color = colors_map.get(ch, C_BLUE)
+        full_color = CHANNEL_COLORS_MAP.get(ch, C_BLUE)
         vals = df['到达会话数'].values
         rates_arr = df[_rate_col].values
 
@@ -236,7 +331,7 @@ def plot_channel_funnels(channel_funnels: dict[str, 'pd.DataFrame']) -> None:
 
         bars = []
         for j, (v, bc, ba) in enumerate(zip(vals, bar_colors, bar_alphas)):
-            b = ax.barh(short_labels[j], v, height=0.6, color=bc,
+            b = ax.barh(PAGE_SHORT_LABELS[j], v, height=0.6, color=bc,
                         edgecolor='white', linewidth=1.2, alpha=ba, zorder=3)
             bars.append(b)
 
@@ -297,7 +392,7 @@ def plot_loss_waterfall(loss_df: 'pd.DataFrame') -> None:
 
     bar_colors = [_severity_color(v) for v in values]
 
-    # 瀑布核心：cumulative 跟踪每步累积值, size n+1 so cumulative[n] = total
+    # 瀑布核心：cumulative 跟踪每步累积值
     cumulative = np.zeros(n + 1)
     bottoms = np.zeros(n)
 
@@ -371,15 +466,7 @@ def plot_channel_device_heatmap(cross_df: 'pd.DataFrame') -> None:
     data = pivot.values
     vmin, vmax = data.min(), data.max()
 
-    # 自定义分段色：低→中→高 均匀过渡
-    from matplotlib.colors import LinearSegmentedColormap
-    custom_cmap = LinearSegmentedColormap.from_list(
-        'custom_rdylgn',
-        ['#D64545', '#E8934B', '#F2D398', '#E8ECCA', '#4CAF82'],
-        N=256,
-    )
-
-    im = ax.imshow(data, cmap=custom_cmap, aspect='auto', vmin=vmin, vmax=vmax)
+    im = ax.imshow(data, cmap=CMAP_RDYLGN, aspect='auto', vmin=vmin, vmax=vmax)
 
     mid_val = (vmin + vmax) / 2
     for i in range(len(pivot.index)):
@@ -390,7 +477,7 @@ def plot_channel_device_heatmap(cross_df: 'pd.DataFrame') -> None:
                     fontsize=14, fontweight='bold', color=text_color)
 
     ax.set_xticks(range(len(pivot.columns)))
-    ax.set_xticklabels(['手机', '桌面', '平板'], fontsize=12)
+    ax.set_xticklabels(DEVICE_CN_LABELS[:len(pivot.columns)], fontsize=12)
     ax.set_yticks(range(len(pivot.index)))
     ax.set_yticklabels(pivot.index, fontsize=12)
     ax.tick_params(left=False, bottom=False)
@@ -565,7 +652,6 @@ def plot_pie_matrix(pie_df: 'pd.DataFrame') -> None:
     pie_scores = pie_df['PIE得分'].values.astype(int)
     ease_vals = pie_df['Ease'].values.astype(int)
 
-    # 简化：单色气泡 + 大小编码 PIE（移除颜色维度，PIE=Ease×P×I 已综合三者）
     ax.scatter(x, y, s=sizes, c=C_BLUE, alpha=0.65,
                edgecolors=C_DARK, linewidth=1.0, zorder=4)
 
@@ -577,7 +663,6 @@ def plot_pie_matrix(pie_df: 'pd.DataFrame') -> None:
     # 象限分割线
     ax.axhline(y=5, color=C_GREY, linestyle=':', alpha=0.4, zorder=1)
     ax.axvline(x=5, color=C_GREY, linestyle=':', alpha=0.4, zorder=1)
-    # 右上象限标注
     ax.text(10, 10.5, '优先投入', ha='right', fontsize=9, color=C_GREY, alpha=0.6)
     ax.text(0.5, 0.5, '暂缓', ha='left', fontsize=9, color=C_GREY, alpha=0.6)
 
@@ -636,11 +721,8 @@ def plot_strict_vs_coverage(strict_df: 'pd.DataFrame') -> None:
     - 页面覆盖 (宽松): 只要访问过该页面即计入, 独立统计各页面, 允许多入口/深链
     - 严格路径 (顺序): 必须按 Home→PLP→PDP→Cart→Checkout 时间顺序访问, 人数必递减
     """
-    from python.config import FUNNEL_COLORS
-
     fig, ax = plt.subplots(figsize=(13, 7))
-    labels = ['首页', '列表页', '详情页', '购物车', '结算页']
-    x_pos = np.arange(len(labels))
+    x_pos = np.arange(len(PAGE_SHORT_LABELS))
     width = 0.32
 
     strict_vals = strict_df['严格路径到达会话数'].values
@@ -680,7 +762,7 @@ def plot_strict_vs_coverage(strict_df: 'pd.DataFrame') -> None:
         )
 
     ax.set_xticks(x_pos)
-    ax.set_xticklabels(labels, fontsize=11)
+    ax.set_xticklabels(PAGE_SHORT_LABELS, fontsize=11)
     ax.set_title(
         '严格路径漏斗 vs 页面覆盖分析\n'
         '覆盖分析允许深链多入口 (下游可超上游), 严格路径人数必递减',
@@ -779,16 +861,13 @@ def plot_new_vs_returning(nr_results: dict) -> None:
          '老用户（已购买过）', '#4CAF82'),
     ]
 
-    short_labels = ['首页', '列表页', '详情页', '购物车', '结算页']
-    event_labels_short = ['浏览', '点击', '加购', '购买']
-
     for row_idx, (page_key, event_key, group_title, color) in enumerate(titles):
         # 左：页面漏斗
         ax_page = axes[row_idx, 0]
         page_df = nr_results[page_key]
         page_vals = page_df['到达会话数'].values
         bars = ax_page.barh(
-            short_labels, page_vals, height=0.55, color=color,
+            PAGE_SHORT_LABELS, page_vals, height=0.55, color=color,
             edgecolor='white', linewidth=1.2, alpha=0.88, zorder=3,
         )
         ax_page.invert_yaxis()
@@ -810,7 +889,7 @@ def plot_new_vs_returning(nr_results: dict) -> None:
         event_df = nr_results[event_key]
         event_vals = event_df['会话数'].values
         bars2 = ax_event.barh(
-            event_labels_short, event_vals, height=0.55, color=color,
+            EVENT_SHORT_LABELS, event_vals, height=0.55, color=color,
             edgecolor='white', linewidth=1.2, alpha=0.88, zorder=3,
         )
         ax_event.invert_yaxis()
@@ -851,7 +930,7 @@ def plot_weekend_comparison(weekend_df: 'pd.DataFrame') -> None:
         ax = axes[idx]
         vals = weekend_df[col].values
         labels = weekend_df.index.tolist()
-        colors = ['#5B9BD5', '#E8934B']  # 工作日蓝, 周末橙
+        colors = ['#5B9BD5', '#E8934B']
 
         bars = ax.bar(
             labels, vals, width=0.4, color=colors,
@@ -896,21 +975,14 @@ def plot_cohort_heatmap(retention_matrix: 'pd.DataFrame') -> None:
     data = plot_data.values
     rows, cols = data.shape
 
-    from matplotlib.colors import LinearSegmentedColormap
     fig, ax = plt.subplots(figsize=(min(14, cols * 1.1 + 3), min(8, rows * 0.5 + 2)))
 
-    cmap = LinearSegmentedColormap.from_list(
-        'retention_green',
-        ['#F5F5F5', '#C4E8D4', '#4CAF82', '#2D7A4A'],
-        N=256,
-    )
-    im = ax.imshow(data, cmap=cmap, aspect='auto', vmin=0, vmax=100)
+    im = ax.imshow(data, cmap=CMAP_RETENTION, aspect='auto', vmin=0, vmax=100)
 
     for i in range(rows):
         for j in range(cols):
             val = data[i, j]
             if not np.isnan(val) and val > 0:
-                # 高于 65% 的深绿背景用白色文字确保可读性
                 text_color = 'white' if val > 65 else C_DARK
                 ax.text(j, i, f'{val:.1f}%', ha='center', va='center',
                         fontsize=9, fontweight='bold', color=text_color)
@@ -930,3 +1002,344 @@ def plot_cohort_heatmap(retention_matrix: 'pd.DataFrame') -> None:
     ax.set_ylabel('首次购买月份 (Cohort)', fontsize=12, labelpad=10)
     fig.tight_layout()
     _save(fig, '16_cohort_heatmap')
+
+
+# ═══════════════════════════════════════════════════════════
+# 交互式漏斗图 (plotly)
+# ═══════════════════════════════════════════════════════════
+
+def plot_page_funnel_interactive(funnel_df: 'pd.DataFrame') -> None:
+    """页面覆盖漏斗 — 交互式 plotly 版本，保存为 HTML"""
+    import plotly.graph_objects as go
+    from datetime import date
+
+    labels = PAGE_SHORT_LABELS
+    values = funnel_df['到达会话数'].tolist()
+    rate_col = '交叉到达率(%)' if '交叉到达率(%)' in funnel_df.columns else '上一阶段转化率(%)'
+    rates = funnel_df[rate_col].tolist()
+    overall_rates = funnel_df['整体到达率(%)'].tolist()
+    n_sessions = _CHART_META.get('n_sessions', 0)
+    first_val = values[0]
+
+    # 瓶颈环节
+    if len(rates) > 1:
+        bottleneck_idx = rates[1:].index(min(rates[1:])) + 1
+    else:
+        bottleneck_idx = None
+
+    # 构建每条信息
+    inside_text = []
+    customdata = []  # [percentInitial, percentPrevious, overallRate]
+    for i, (v, rate, ovr) in enumerate(zip(values, rates, overall_rates)):
+        pi = v / first_val * 100
+        pp = 100.0 if i == 0 else rate
+        customdata.append([round(pi, 1), round(pp, 1), ovr])
+        if i == 0:
+            inside_text.append(f'<b>{v:,}</b> 会话<br>到达率 {ovr:.1f}%')
+        else:
+            inside_text.append(
+                f'<b>{v:,}</b> 会话<br>交叉到达 {rate:.1f}% | 整体 {ovr:.1f}%'
+            )
+
+    hovertemplate = (
+        '<b>%{y}</b><br>'
+        '会话数: <b>%{x:,}</b><br>'
+        '占首页比例: %{customdata[0]:.1f}%<br>'
+        '占上层比例: %{customdata[1]:.1f}%<br>'
+        '整体到达率: %{customdata[2]:.1f}%'
+        '<extra></extra>'
+    )
+
+    # 渐变蓝绿色板
+    colors = ['#0B3D3D', '#146B5A', '#1D9778', '#3EBF9C', '#7ED8C2']
+
+    fig = go.Figure(go.Funnel(
+        y=labels,
+        x=values,
+        text=inside_text,
+        textinfo='text',
+        textposition='inside',
+        textfont={'size': 14, 'color': 'white', 'family': 'Microsoft YaHei'},
+        customdata=customdata,
+        hovertemplate=hovertemplate,
+        marker={
+            'color': colors[:len(labels)],
+            'line': {'color': 'rgba(255,255,255,0.65)', 'width': 2.5},
+        },
+        connector={
+            'line': {'color': 'rgba(11,61,61,0.12)', 'width': 1.6, 'dash': 'solid'},
+        },
+        outsidetextfont={'size': 12, 'color': '#555'},
+    ))
+
+    annotations = []
+    if bottleneck_idx is not None:
+        annotations.append(dict(
+            x=0.5, y=0.0,
+            xref='paper', yref='paper',
+            text=(
+                f'<b>最大断点</b>:  {labels[bottleneck_idx]}'
+                f'  →  交叉到达率仅 <b>{rates[bottleneck_idx]:.1f}%</b>'
+            ),
+            showarrow=False,
+            font={'size': 14, 'color': '#C0392B', 'family': 'Microsoft YaHei'},
+            bgcolor='rgba(255,245,245,0.92)',
+            borderpad=12,
+            bordercolor='#E8C4C4',
+            borderwidth=1,
+        ))
+
+    footnote = (
+        f'ecommerce_funnel_analysis  |  n = {n_sessions:,} sessions  |  '
+        f'{date.today().isoformat()}'
+    )
+
+    fig.update_layout(
+        title={
+            'text': '<b>页面覆盖漏斗</b>  ·  Page Coverage Funnel',
+            'font': {'size': 24, 'color': '#1a1a2e', 'family': 'Microsoft YaHei'},
+            'x': 0.5, 'xanchor': 'center',
+        },
+        annotations=annotations,
+        width=980, height=700,
+        margin={'t': 100, 'b': 70, 'l': 80, 'r': 80},
+        paper_bgcolor='#F8F9FA',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font={'family': 'Microsoft YaHei, SimHei, sans-serif'},
+    )
+
+    fig.add_annotation(
+        text=footnote,
+        x=0.5, y=-0.05,
+        xref='paper', yref='paper',
+        showarrow=False,
+        font={'size': 10, 'color': '#AAA'},
+    )
+
+    html_path = str(CHART_DIR / '01_page_funnel.html')
+    fig.write_html(html_path, include_plotlyjs=True)
+    logger.info("  Saved: %s", (CHART_DIR / '01_page_funnel.html').name)
+
+
+def plot_strict_page_funnel_interactive(strict_df: 'pd.DataFrame') -> None:
+    """严格路径漏斗 — 交互式 plotly 版本，保存为 HTML"""
+    import plotly.graph_objects as go
+    from datetime import date
+
+    labels = PAGE_SHORT_LABELS
+    real_values = strict_df['严格路径到达会话数'].tolist()
+    seq_rates = strict_df['顺序转化率(%)'].tolist()
+    retention_rates = strict_df['整体留存率(%)'].tolist()
+    n_sessions = _CHART_META.get('n_sessions', 0)
+    first_val = real_values[0]
+
+    # 幂律压缩视觉宽度：末层 73 相对 300K 仅 0.02%，0.3 次方后约 10%
+    arr = np.array(real_values, dtype=float)
+    display_x = np.power(arr, 0.3).tolist()
+
+    # 最大流失环节
+    if len(seq_rates) > 1:
+        bottleneck_idx = seq_rates[1:].index(min(seq_rates[1:])) + 1
+    else:
+        bottleneck_idx = None
+
+    inside_text = []
+    customdata = []  # [realValue, percentInitial, percentPrevious, retentionRate]
+    for i, (v, sr, rr) in enumerate(zip(real_values, seq_rates, retention_rates)):
+        pi = v / first_val * 100
+        pp = 100.0 if i == 0 else sr
+        customdata.append([v, round(pi, 1), round(pp, 1), rr])
+        if i == 0:
+            inside_text.append(f'<b>{v:,}</b> 会话<br>留存率 {rr:.1f}%')
+        else:
+            inside_text.append(
+                f'<b>{v:,}</b> 会话<br>顺序转化 {sr:.1f}% | 留存 {rr:.1f}%'
+            )
+
+    hovertemplate = (
+        '<b>%{y}</b><br>'
+        '会话数: <b>%{customdata[0]:,}</b><br>'
+        '占首页比例: %{customdata[1]:.1f}%<br>'
+        '占上层比例: %{customdata[2]:.1f}%<br>'
+        '整体留存率: %{customdata[3]:.1f}%'
+        '<extra></extra>'
+    )
+
+    colors = ['#5B2C6F', '#7D3C98', '#A569BD', '#C39BD3', '#D7BDE2']
+
+    fig = go.Figure(go.Funnel(
+        y=labels,
+        x=display_x,
+        text=inside_text,
+        textinfo='text',
+        textposition='inside',
+        textfont={'size': 14, 'color': 'white', 'family': 'Microsoft YaHei'},
+        customdata=customdata,
+        hovertemplate=hovertemplate,
+        marker={
+            'color': colors,
+            'line': {'color': 'rgba(255,255,255,0.65)', 'width': 2.5},
+        },
+        connector={
+            'line': {'color': 'rgba(91,44,111,0.12)', 'width': 1.6, 'dash': 'solid'},
+        },
+        outsidetextfont={'size': 12, 'color': '#555'},
+    ))
+
+    annotations = []
+    if bottleneck_idx is not None:
+        annotations.append(dict(
+            x=0.5, y=0.0,
+            xref='paper', yref='paper',
+            text=(
+                f'<b>最大流失</b>:  {labels[bottleneck_idx - 1]} → {labels[bottleneck_idx]}'
+                f'  转化率仅 <b>{seq_rates[bottleneck_idx]:.1f}%</b>'
+            ),
+            showarrow=False,
+            font={'size': 14, 'color': '#C0392B', 'family': 'Microsoft YaHei'},
+            bgcolor='rgba(255,245,245,0.92)',
+            borderpad=12,
+            bordercolor='#E8C4C4',
+            borderwidth=1,
+        ))
+
+    footnote = (
+        f'ecommerce_funnel_analysis  |  n = {n_sessions:,} sessions  |  '
+        f'{date.today().isoformat()}'
+    )
+
+    fig.update_layout(
+        title={
+            'text': '<b>严格路径漏斗</b>  ·  Strict Path Funnel',
+            'font': {'size': 24, 'color': '#1a1a2e', 'family': 'Microsoft YaHei'},
+            'x': 0.5, 'xanchor': 'center',
+        },
+        annotations=annotations,
+        width=980, height=700,
+        margin={'t': 100, 'b': 70, 'l': 80, 'r': 80},
+        paper_bgcolor='#F8F9FA',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font={'family': 'Microsoft YaHei, SimHei, sans-serif'},
+    )
+
+    fig.add_annotation(
+        text=footnote,
+        x=0.5, y=-0.05,
+        xref='paper', yref='paper',
+        showarrow=False,
+        font={'size': 10, 'color': '#AAA'},
+    )
+
+    html_path = str(CHART_DIR / '01b_strict_page_funnel.html')
+    fig.write_html(html_path, include_plotlyjs=True)
+    logger.info("  Saved: %s", (CHART_DIR / '01b_strict_page_funnel.html').name)
+
+
+def plot_event_funnel_interactive(funnel_df: 'pd.DataFrame') -> None:
+    """行为级漏斗 — 交互式 plotly 版本，保存为 HTML"""
+    import plotly.graph_objects as go
+    from datetime import date
+
+    labels = EVENT_SHORT_LABELS
+    values = funnel_df['会话数'].tolist()
+    prev_rates = funnel_df['上一阶段转化率(%)'].tolist()
+    total_rates = funnel_df['整体转化率(%)'].tolist()
+    n_sessions = _CHART_META.get('n_sessions', 0)
+    first_val = values[0]
+
+    # 最大流失环节
+    if len(prev_rates) > 1:
+        bottleneck_idx = prev_rates[1:].index(min(prev_rates[1:])) + 1
+    else:
+        bottleneck_idx = None
+
+    inside_text = []
+    customdata = []  # [percentInitial, percentPrevious, totalRate]
+    for i, (v, pr, tr) in enumerate(zip(values, prev_rates, total_rates)):
+        pi = v / first_val * 100
+        pp = 100.0 if i == 0 else pr
+        customdata.append([round(pi, 1), round(pp, 1), tr])
+        if i == 0:
+            inside_text.append(f'<b>{v:,}</b> 会话<br>整体转化 {tr:.1f}%')
+        else:
+            inside_text.append(
+                f'<b>{v:,}</b> 会话<br>阶段转化 {pr:.1f}% | 整体 {tr:.1f}%'
+            )
+
+    hovertemplate = (
+        '<b>%{y}</b><br>'
+        '会话数: <b>%{x:,}</b><br>'
+        '占初始: %{customdata[0]:.1f}%<br>'
+        '占上层: %{customdata[1]:.1f}%<br>'
+        '整体转化率: %{customdata[2]:.1f}%'
+        '<extra></extra>'
+    )
+
+    colors = ['#1A3A4A', '#2C5F7C', '#4682A8', '#6BA5C7']
+
+    fig = go.Figure(go.Funnel(
+        y=labels,
+        x=values,
+        text=inside_text,
+        textinfo='text',
+        textposition='inside',
+        textfont={'size': 14, 'color': 'white', 'family': 'Microsoft YaHei'},
+        customdata=customdata,
+        hovertemplate=hovertemplate,
+        marker={
+            'color': colors,
+            'line': {'color': 'rgba(255,255,255,0.65)', 'width': 2.5},
+        },
+        connector={
+            'line': {'color': 'rgba(26,58,74,0.12)', 'width': 1.6, 'dash': 'solid'},
+        },
+        outsidetextfont={'size': 12, 'color': '#555'},
+    ))
+
+    annotations = []
+    if bottleneck_idx is not None:
+        annotations.append(dict(
+            x=0.5, y=0.0,
+            xref='paper', yref='paper',
+            text=(
+                f'<b>最大流失</b>:  {labels[bottleneck_idx - 1]} → {labels[bottleneck_idx]}'
+                f'  转化率仅 <b>{prev_rates[bottleneck_idx]:.1f}%</b>'
+            ),
+            showarrow=False,
+            font={'size': 14, 'color': '#C0392B', 'family': 'Microsoft YaHei'},
+            bgcolor='rgba(255,245,245,0.92)',
+            borderpad=12,
+            bordercolor='#E8C4C4',
+            borderwidth=1,
+        ))
+
+    footnote = (
+        f'ecommerce_funnel_analysis  |  n = {n_sessions:,} sessions  |  '
+        f'{date.today().isoformat()}'
+    )
+
+    fig.update_layout(
+        title={
+            'text': '<b>行为级转化漏斗</b>  ·  Event Funnel',
+            'font': {'size': 24, 'color': '#1a1a2e', 'family': 'Microsoft YaHei'},
+            'x': 0.5, 'xanchor': 'center',
+        },
+        annotations=annotations,
+        width=880, height=620,
+        margin={'t': 100, 'b': 70, 'l': 80, 'r': 80},
+        paper_bgcolor='#F8F9FA',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font={'family': 'Microsoft YaHei, SimHei, sans-serif'},
+    )
+
+    fig.add_annotation(
+        text=footnote,
+        x=0.5, y=-0.05,
+        xref='paper', yref='paper',
+        showarrow=False,
+        font={'size': 10, 'color': '#AAA'},
+    )
+
+    html_path = str(CHART_DIR / '02_event_funnel.html')
+    fig.write_html(html_path, include_plotlyjs=True)
+    logger.info("  Saved: %s", (CHART_DIR / '02_event_funnel.html').name)
