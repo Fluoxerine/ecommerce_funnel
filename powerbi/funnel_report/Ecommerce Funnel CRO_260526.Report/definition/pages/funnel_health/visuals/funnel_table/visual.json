@@ -1,0 +1,109 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "funnel_table",
+  "position": {
+    "x": 336,
+    "y": 360,
+    "z": 3001,
+    "height": 360,
+    "width": 944,
+    "tabOrder": 3001
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_overview"
+                    }
+                  },
+                  "Property": "漏斗阶段"
+                }
+              },
+              "queryRef": "funnel_overview.漏斗阶段",
+              "nativeQueryRef": "漏斗阶段"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_overview"
+                    }
+                  },
+                  "Property": "到达会话数"
+                }
+              },
+              "queryRef": "funnel_overview.到达会话数",
+              "nativeQueryRef": "到达会话数"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_overview"
+                    }
+                  },
+                  "Property": "转化率(%)"
+                }
+              },
+              "queryRef": "funnel_overview.转化率(%)",
+              "nativeQueryRef": "转化率(%)"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_overview"
+                    }
+                  },
+                  "Property": "整体到达率(%)"
+                }
+              },
+              "queryRef": "funnel_overview.整体到达率(%)",
+              "nativeQueryRef": "整体到达率(%)"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'漏斗阶段明细'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "20D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
