@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/Python-3.13+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![SciPy](https://img.shields.io/badge/SciPy-Statistical_Tests-8CAAE6?logo=scipy&logoColor=white)](https://scipy.org/)
-[![Matplotlib](https://img.shields.io/badge/Matplotlib-23_Charts-11557C?logo=python&logoColor=white)](https://matplotlib.org/)
+[![Matplotlib](https://img.shields.io/badge/Matplotlib-25_Charts-11557C?logo=python&logoColor=white)](https://matplotlib.org/)
 [![Plotly](https://img.shields.io/badge/Plotly-Interactive-3F4F75?logo=plotly&logoColor=white)](https://plotly.com/)
 [![Pandas](https://img.shields.io/badge/Pandas-Data_Wrangling-150458?logo=pandas&logoColor=white)](https://pandas.pydata.org/)
 [![Power BI](https://img.shields.io/badge/Power_BI-PBIR_Report-F2C811?logo=powerbi&logoColor=black)](https://powerbi.microsoft.com/)
@@ -165,11 +165,15 @@ PIE = Potential × Importance × Ease（WiderFunnel 方法论，10 分制）。�
 
 ![新老用户](output/charts/14_new_vs_returning.png)
 
-### 同期群留存热力图 — 用户生命周期视角
+### 同期群留存热力图 — 两个视角
 
-每行是一个月首次购买的用户同期群（cohort），每列是第 N 个月的回购留存率。颜色越深留存越高。这张图回答的问题是：用户买了第一次之后，多久会回来买第二次？持续回购的同期群说明用户粘性强，回购率逐月衰减的同期群说明需要做复购唤醒。
+**回购留存**：每行是一个月首次购买的用户同期群，每列是第 N 个月的回购率。回答的是"用户买了第一次之后，多久会回来买第二次？"
 
 ![同期群](output/charts/16_cohort_heatmap.png)
+
+**访问留存**：每行是一个月首次访问的用户同期群，每列是第 N 个月的回访率。回购留存只覆盖购买用户（~15%），访问留存覆盖全部用户——回答的是"用户来了一次之后，还会不会再来？"两张图对照阅读：回购留存高但访问留存低的同期群，说明"逛的人多但买的人少"，需要从转化入手而非流量。
+
+![访问留存](output/charts/16b_visit_cohort_heatmap.png)
 
 ---
 

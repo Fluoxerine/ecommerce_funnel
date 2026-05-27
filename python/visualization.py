@@ -1004,6 +1004,47 @@ def plot_cohort_heatmap(retention_matrix: 'pd.DataFrame') -> None:
     _save(fig, '16_cohort_heatmap')
 
 
+def plot_visit_cohort_heatmap(retention_matrix: 'pd.DataFrame') -> None:
+    """访问留存 Cohort 热力图 — 行=首次访问月份, 列=月差, 值=回访留存率(%)"""
+    if retention_matrix.empty:
+        logger.info("  访问留存 Cohort 矩阵为空, 跳过图表")
+        return
+
+    plot_data = retention_matrix.tail(12)
+    max_periods = min(12, plot_data.shape[1])
+    plot_data = plot_data.iloc[:, :max_periods]
+    data = plot_data.values
+    rows, cols = data.shape
+
+    fig, ax = plt.subplots(figsize=(min(14, cols * 1.1 + 3), min(8, rows * 0.5 + 2)))
+
+    im = ax.imshow(data, cmap=CMAP_RETENTION, aspect='auto', vmin=0, vmax=100)
+
+    for i in range(rows):
+        for j in range(cols):
+            val = data[i, j]
+            if not np.isnan(val) and val > 0:
+                text_color = 'white' if val > 65 else C_DARK
+                ax.text(j, i, f'{val:.1f}%', ha='center', va='center',
+                        fontsize=9, fontweight='bold', color=text_color)
+
+    ax.set_xticks(range(cols))
+    ax.set_xticklabels([f'M+{j}' if j > 0 else 'M0' for j in range(cols)],
+                       fontsize=10)
+    ax.set_yticks(range(rows))
+    ax.set_yticklabels([str(idx) for idx in plot_data.index], fontsize=10)
+    ax.tick_params(left=False, bottom=False)
+
+    cbar = plt.colorbar(im, ax=ax, shrink=0.85, pad=0.02)
+    cbar.set_label('回访率 (%)', fontsize=11, labelpad=8)
+
+    ax.set_title('Cohort 留存分析 — 首次访问后月度回访率', fontsize=16, pad=18)
+    ax.set_xlabel('距首次访问的月数', fontsize=12, labelpad=10)
+    ax.set_ylabel('首次访问月份 (Cohort)', fontsize=12, labelpad=10)
+    fig.tight_layout()
+    _save(fig, '16b_visit_cohort_heatmap')
+
+
 # ═══════════════════════════════════════════════════════════
 # 交互式漏斗图 (plotly)
 # ═══════════════════════════════════════════════════════════

@@ -1167,6 +1167,89 @@ def compute_cohort_retention(funnel_wide: pd.DataFrame) -> pd.DataFrame:
     return retention_matrix
 
 
+def compute_visit_cohort_retention(funnel_wide: pd.DataFrame) -> pd.DataFrame:
+    """按首次访问月份分组的留存 Cohort 分析
+
+    以用户首次会话的月份为 cohort，追踪后续月份的回访行为。
+    与 compute_cohort_retention 互补：回购留存看"买了再买"，访问留存看"来了再来"。
+    返回留存矩阵 (cohort_month × period_index)，值为回访留存率(%)。
+    """
+    logger.info("--- 访问留存 Cohort 分析 ---")
+
+    fw = funnel_wide.copy()
+    fw['session_date'] = pd.to_datetime(fw['session_start'])
+
+    # 确定每个用户的首次访问月份
+    first_visit = (
+        fw.groupby('customer_id')['session_date']
+        .min()
+        .reset_index()
+    )
+    first_visit.columns = ['customer_id', 'first_visit_date']
+    first_visit['cohort_month'] = first_visit['first_visit_date'].dt.to_period('M')
+
+    # 所有回访行为关联首次访问月份
+    visits = fw[['customer_id', 'session_date']].copy()
+    visits['visit_month'] = visits['session_date'].dt.to_period('M')
+    visits = visits.merge(first_visit[['customer_id', 'cohort_month']],
+                          on='customer_id', how='inner')
+
+    visits['cohort_index'] = (
+        visits['visit_month'].apply(lambda x: x.ordinal)
+        - visits['cohort_month'].apply(lambda x: x.ordinal)
+    )
+
+    # 构建留存矩阵
+    cohort_sizes = first_visit.groupby('cohort_month')['customer_id'].nunique()
+    retention_matrix = visits.pivot_table(
+        index='cohort_month', columns='cohort_index',
+        values='customer_id', aggfunc='nunique',
+    )
+
+    for idx in retention_matrix.index:
+        size = cohort_sizes.get(idx, 0)
+        if size > 0:
+            retention_matrix.loc[idx] = (
+                retention_matrix.loc[idx] / size * 100
+            ).round(1)
+        else:
+            logger.warning("  cohort %s size=0 或缺失，留存率留空", idx)
+
+    retention_matrix = retention_matrix.sort_index()
+
+    # 稀疏数据告警
+    cohort_sizes_by_year: dict[int, list[int]] = {}
+    for c in retention_matrix.index:
+        y = c.year if hasattr(c, 'year') else int(str(c)[:4])
+        cohort_sizes_by_year.setdefault(y, []).append(
+            int(retention_matrix.at[c, 0]) if 0 in retention_matrix.columns else 0
+        )
+
+    for y, sizes in sorted(cohort_sizes_by_year.items()):
+        avg = sum(sizes) / len(sizes) if sizes else 0
+        if avg < 500:
+            logger.warning(
+                "  %d 年平均 cohort size=%.0f (<500)，数据可能不完整，"
+                "留存率波动较大，谨慎解读", y, avg,
+            )
+
+    for cohort, row in retention_matrix.head(12).iterrows():
+        m0 = int(row.get(0, 0))
+        m1 = row.get(1, None)
+        m3 = row.get(3, None)
+        parts = [f"cohort={cohort}, size={m0}"]
+        if m1 is not None:
+            parts.append(f"M+1={m1:.1f}%")
+        if m3 is not None:
+            parts.append(f"M+3={m3:.1f}%")
+        logger.info("  %s", ", ".join(parts))
+
+    if len(retention_matrix) > 12:
+        logger.info("  ... (%d cohorts total)", len(retention_matrix))
+
+    return retention_matrix
+
+
 # ═══════════════════════════════════════════════════════════════
 # 基准快照 & 策略摘要 (阶段 6)
 # ═══════════════════════════════════════════════════════════════

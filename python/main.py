@@ -26,6 +26,7 @@ from python.funnel_analysis import (
     compute_strict_page_funnel, compute_deep_link_analysis,
     compute_trend_attribution, compute_new_vs_returning_funnel,
     compute_weekend_analysis, compute_cohort_retention,
+    compute_visit_cohort_retention,
 )
 from python.visualization import (
     plot_cleaning_funnel, plot_page_funnel, plot_event_funnel,
@@ -34,6 +35,7 @@ from python.visualization import (
     plot_churn_by_channel, plot_pie_matrix, plot_category_funnel,
     plot_strict_vs_coverage, plot_deep_link_comparison,
     plot_new_vs_returning, plot_weekend_comparison, plot_cohort_heatmap,
+    plot_visit_cohort_heatmap,
     plot_page_funnel_interactive, plot_event_funnel_interactive,
     plot_strict_page_funnel, plot_strict_page_funnel_interactive,
     set_chart_meta,
@@ -92,7 +94,8 @@ def _run_stage3_funnel_modeling(funnel_wide, events_cleaned, tables):
         compute_duration_analysis, compute_time_of_day_analysis, compute_trend_analysis,
         channel_device_cross_analysis, compute_strict_page_funnel,
         compute_deep_link_analysis, compute_new_vs_returning_funnel,
-        compute_weekend_analysis, compute_cohort_retention, compute_trend_attribution,
+        compute_weekend_analysis, compute_cohort_retention,
+        compute_visit_cohort_retention, compute_trend_attribution,
     )
 
     page_funnel = compute_page_funnel(funnel_wide)
@@ -114,6 +117,7 @@ def _run_stage3_funnel_modeling(funnel_wide, events_cleaned, tables):
     trend_attribution = compute_trend_attribution(funnel_wide)
     cross_df = channel_device_cross_analysis(funnel_wide)
     cohort_retention = compute_cohort_retention(funnel_wide)
+    visit_cohort_retention = compute_visit_cohort_retention(funnel_wide)
 
     return {
         'page_funnel': page_funnel, 'strict_funnel': strict_funnel,
@@ -125,6 +129,7 @@ def _run_stage3_funnel_modeling(funnel_wide, events_cleaned, tables):
         'duration_df': duration_df, 'hourly': hourly, 'dow': dow,
         'monthly': monthly, 'trend_attribution': trend_attribution,
         'cross_df': cross_df, 'cohort_retention': cohort_retention,
+        'visit_cohort_retention': visit_cohort_retention,
     }
 
 
@@ -161,7 +166,7 @@ def _run_visualization(funnel_wide, cleaning_stats, stage3, loss_df, pie_df,
     set_chart_meta(len(funnel_wide))
     t_viz = time.time()
     logger.info("=" * 60)
-    logger.info("生成可视化图表 (23 张: 20 静态 PNG + 3 交互式 HTML)")
+    logger.info("生成可视化图表 (25 张: 22 静态 PNG + 3 交互式 HTML)")
     logger.info("=" * 60)
 
     plots = [
@@ -184,6 +189,7 @@ def _run_visualization(funnel_wide, cleaning_stats, stage3, loss_df, pie_df,
         ('14_new_vs_returning', plot_new_vs_returning, stage3['nr_results']),
         ('15_weekend_comparison', plot_weekend_comparison, stage3['weekend_df']),
         ('16_cohort_heatmap', plot_cohort_heatmap, stage3['cohort_retention']),
+        ('16b_visit_cohort_heatmap', plot_visit_cohort_heatmap, stage3['visit_cohort_retention']),
         # 严格路径漏斗
         ('01b_strict_page_funnel', plot_strict_page_funnel, stage3['strict_funnel']),
     ]
