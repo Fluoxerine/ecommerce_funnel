@@ -11,9 +11,7 @@ __pycache__/
 # 输出（每次运行重新生成）
 output/*.csv
 output/*.log
-output/charts/*.png
-output/charts/*.html
-!output/charts/.gitkeep
+# 图表已提交，方便 GitHub 直接预览
 
 # Power BI
 powerbi/data/*.csv
