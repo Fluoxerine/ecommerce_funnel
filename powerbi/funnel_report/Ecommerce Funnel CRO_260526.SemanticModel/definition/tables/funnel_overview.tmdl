@@ -1,133 +1,59 @@
 table funnel_overview
-	lineageTag: 2387a23b-b353-4f81-bc84-ba66b4d5798e
+	lineageTag: df763b0f-d44b-4481-a4f7-d00d496df405
 
-	column session_id
-		dataType: int64
-		formatString: 0
-		lineageTag: 7200904e-90a4-4231-befa-9c199293f618
-		summarizeBy: sum
-		sourceColumn: session_id
-
-		annotation SummarizationSetBy = Automatic
-
-	column customer_id
-		dataType: int64
-		formatString: 0
-		lineageTag: 7142a153-020e-48d0-b84a-9ed3c3796383
-		summarizeBy: sum
-		sourceColumn: customer_id
-
-		annotation SummarizationSetBy = Automatic
-
-	column traffic_source
+	column 漏斗阶段
 		dataType: string
-		lineageTag: 31eb0a35-68c3-46c2-8b75-f9d048e1e5d8
+		lineageTag: 290ef541-c3a9-4810-b5d3-a134a7443e78
 		summarizeBy: none
-		sourceColumn: traffic_source
+		sourceColumn: 漏斗阶段
 
 		annotation SummarizationSetBy = Automatic
 
-	column device_type
-		dataType: string
-		lineageTag: 32572811-3c57-4384-9890-1ce0f89f8541
-		summarizeBy: none
-		sourceColumn: device_type
-
-		annotation SummarizationSetBy = Automatic
-
-	column experiment_group
-		dataType: string
-		lineageTag: 55dfcbbc-7336-407a-b63e-63ffc4ad61c5
-		summarizeBy: none
-		sourceColumn: experiment_group
-
-		annotation SummarizationSetBy = Automatic
-
-	column step1_home
+	column 到达会话数
 		dataType: int64
 		formatString: 0
-		lineageTag: 8c720f18-d987-4e02-974d-e66650f71104
+		lineageTag: 1b34318f-4ad2-48f0-93d1-dac6a40bc8b8
 		summarizeBy: sum
-		sourceColumn: step1_home
+		sourceColumn: 到达会话数
 
 		annotation SummarizationSetBy = Automatic
 
-	column step2_plp
+	column 购买会话数
 		dataType: int64
 		formatString: 0
-		lineageTag: 32bdcb7e-bd5f-4776-ac8e-9d9253a043d6
+		lineageTag: fa7d5c75-341a-4374-af6c-459bac258c1f
 		summarizeBy: sum
-		sourceColumn: step2_plp
+		sourceColumn: 购买会话数
 
 		annotation SummarizationSetBy = Automatic
 
-	column step3_pdp
-		dataType: int64
-		formatString: 0
-		lineageTag: 6170220c-bac4-4b0f-ab79-b2061aebfe65
+	column 转化率(%)
+		dataType: double
+		lineageTag: 0eca113d-d45c-41ad-979f-bde959355dbb
 		summarizeBy: sum
-		sourceColumn: step3_pdp
+		sourceColumn: 转化率(%)
 
 		annotation SummarizationSetBy = Automatic
 
-	column step4_cart
-		dataType: int64
-		formatString: 0
-		lineageTag: 362cb381-0fed-4c53-bdd9-81a0c3caad4a
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 整体到达率(%)
+		dataType: double
+		lineageTag: 0533f74f-89a6-46d6-b9b3-da2577cfbe0b
 		summarizeBy: sum
-		sourceColumn: step4_cart
+		sourceColumn: 整体到达率(%)
 
 		annotation SummarizationSetBy = Automatic
 
-	column step5_checkout
-		dataType: int64
-		formatString: 0
-		lineageTag: 8760649d-e419-4ec0-b5fc-506de70dcad8
-		summarizeBy: sum
-		sourceColumn: step5_checkout
-
-		annotation SummarizationSetBy = Automatic
-
-	column step_purchase
-		dataType: int64
-		formatString: 0
-		lineageTag: 132ce7fe-5173-4d86-9166-c7807f97a435
-		summarizeBy: sum
-		sourceColumn: step_purchase
-
-		annotation SummarizationSetBy = Automatic
-
-	column country
-		dataType: string
-		lineageTag: 75b13fc4-fa58-4acc-bd67-d6c5a7131072
-		summarizeBy: none
-		sourceColumn: country
-
-		annotation SummarizationSetBy = Automatic
-
-	column loyalty_tier
-		dataType: string
-		lineageTag: f54275ef-40e7-4d04-a3d9-fa156669a1a9
-		summarizeBy: none
-		sourceColumn: loyalty_tier
-
-		annotation SummarizationSetBy = Automatic
-
-	column acquisition_channel
-		dataType: string
-		lineageTag: 75bc630b-a1c5-432a-98a1-1566f35bd0b5
-		summarizeBy: none
-		sourceColumn: acquisition_channel
-
-		annotation SummarizationSetBy = Automatic
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	partition funnel_overview = m
 		mode: import
 		source =
 				let
-				    源 = Csv.Document(File.Contents("D:\D30360\Documents\ecommerce_funnel_analysis\powerbi\data\funnel_overview.csv"),[Delimiter=",", Columns=14, Encoding=65001, QuoteStyle=QuoteStyle.None]),
+				    源 = Csv.Document(File.Contents("D:\D30360\Documents\ecommerce_funnel_analysis\powerbi\data\funnel_overview.csv"),[Delimiter=",", Columns=5, Encoding=65001, QuoteStyle=QuoteStyle.None]),
 				    提升的标题 = Table.PromoteHeaders(源, [PromoteAllScalars=true]),
-				    更改的类型 = Table.TransformColumnTypes(提升的标题,{{"session_id", Int64.Type}, {"customer_id", Int64.Type}, {"traffic_source", type text}, {"device_type", type text}, {"experiment_group", type text}, {"step1_home", Int64.Type}, {"step2_plp", Int64.Type}, {"step3_pdp", Int64.Type}, {"step4_cart", Int64.Type}, {"step5_checkout", Int64.Type}, {"step_purchase", Int64.Type}, {"country", type text}, {"loyalty_tier", type text}, {"acquisition_channel", type text}})
+				    更改的类型 = Table.TransformColumnTypes(提升的标题,{{"漏斗阶段", type text}, {"到达会话数", Int64.Type}, {"购买会话数", Int64.Type}, {"转化率(%)", type number}, {"整体到达率(%)", type number}})
 				in
 				    更改的类型
 

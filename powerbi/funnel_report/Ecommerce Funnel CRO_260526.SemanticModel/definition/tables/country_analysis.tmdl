@@ -13,7 +13,7 @@ table country_analysis
 		dataType: int64
 		formatString: 0
 		lineageTag: 39dc4266-df94-49fb-8225-9f61761d5072
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: sessions
 
 		annotation SummarizationSetBy = Automatic
@@ -22,7 +22,7 @@ table country_analysis
 		dataType: int64
 		formatString: 0
 		lineageTag: 1a92e851-139b-4b4f-9531-b615e13d68ff
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: purchases
 
 		annotation SummarizationSetBy = Automatic
@@ -30,7 +30,7 @@ table country_analysis
 	column conversion_rate
 		dataType: double
 		lineageTag: bc8240b4-661e-4fb1-8f82-38f1942d4798
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: conversion_rate
 
 		annotation SummarizationSetBy = Automatic

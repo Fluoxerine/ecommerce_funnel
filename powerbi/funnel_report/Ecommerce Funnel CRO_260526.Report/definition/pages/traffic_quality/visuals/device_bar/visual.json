@@ -1,0 +1,79 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "device_bar",
+  "position": {
+    "x": 640,
+    "y": 0,
+    "z": 1000,
+    "height": 384,
+    "width": 640,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "clusteredBarChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "device_analysis"
+                    }
+                  },
+                  "Property": "device_type"
+                }
+              },
+              "queryRef": "device_analysis.device_type",
+              "nativeQueryRef": "device_type",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "device_analysis"
+                        }
+                      },
+                      "Property": "conversion_rate"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(device_analysis.conversion_rate)",
+              "nativeQueryRef": "conversion_rate",
+              "displayName": "转化率",
+              "format": "0.00%"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'设备转化率'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

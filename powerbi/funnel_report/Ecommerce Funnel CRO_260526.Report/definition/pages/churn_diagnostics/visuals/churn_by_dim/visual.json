@@ -1,0 +1,78 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "churn_by_dim",
+  "position": {
+    "x": 768,
+    "y": 80,
+    "z": 1000,
+    "height": 240,
+    "width": 432,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "barChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "traffic_source"
+                }
+              },
+              "queryRef": "funnel_wide_export.traffic_source",
+              "nativeQueryRef": "traffic_source",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_wide_export"
+                        }
+                      },
+                      "Property": "is_purchased"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(funnel_wide_export.is_purchased)",
+              "nativeQueryRef": "is_purchased",
+              "displayName": "购买数"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'各渠道购买转化'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

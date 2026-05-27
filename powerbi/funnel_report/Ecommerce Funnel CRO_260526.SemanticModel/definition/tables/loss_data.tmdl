@@ -1,0 +1,92 @@
+table loss_data
+	lineageTag: 7a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d
+
+	column 流失环节
+		dataType: string
+		lineageTag: a1b2c3d4-e5f6-a7b8-c9d0-e1f2a3b4c5d6
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [流失环节]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 流失会话数
+		dataType: int64
+		formatString: 0
+		lineageTag: b2c3d4e5-f6a7-b8c9-d0e1-f2a3b4c5d6e7
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [流失会话数]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 损失金额
+		dataType: int64
+		formatString: ¥#,##0
+		lineageTag: c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [损失金额]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Potential
+		dataType: double
+		lineageTag: d4e5f6a7-b8c9-d0e1-f2a3-b4c5d6e7f8a9
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Potential]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Importance
+		dataType: double
+		lineageTag: e5f6a7b8-c9d0-e1f2-a3b4-c5d6e7f8a9b0
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Importance]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Ease
+		dataType: int64
+		formatString: 0
+		lineageTag: f6a7b8c9-d0e1-f2a3-b4c5-d6e7f8a9b0c1
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Ease]
+
+		annotation SummarizationSetBy = Automatic
+
+	column PIE得分
+		dataType: int64
+		formatString: 0
+		lineageTag: a7b8c9d0-e1f2-a3b4-c5d6-e7f8a9b0c1d2
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [PIE得分]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition loss_data = calculated
+		mode: import
+		source =
+				
+				DATATABLE(
+				    "流失环节", STRING,
+				    "流失会话数", INTEGER,
+				    "损失金额", INTEGER,
+				    "Potential", DOUBLE,
+				    "Importance", DOUBLE,
+				    "Ease", INTEGER,
+				    "PIE得分", INTEGER,
+				    {
+				        {"首页→列表页", 121895, 1934868, 2.1, 4.7, 7, 69},
+				        {"列表页→详情页", 160998, 2491794, 2.7, 6.3, 6, 102},
+				        {"详情页→购物车", 239854, 3701056, 4.0, 5.1, 6, 122},
+				        {"购物车→结算页", 73361, 1201121, 1.3, 1.6, 8, 17}
+				    }
+				)
+
+	annotation PBI_Id = 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7
+

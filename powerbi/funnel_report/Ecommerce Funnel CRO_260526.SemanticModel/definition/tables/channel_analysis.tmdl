@@ -13,7 +13,7 @@ table channel_analysis
 		dataType: int64
 		formatString: 0
 		lineageTag: 9542b7a5-d4b5-4433-b5fe-b6d6ad4ded11
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: sessions
 
 		annotation SummarizationSetBy = Automatic
@@ -22,7 +22,7 @@ table channel_analysis
 		dataType: int64
 		formatString: 0
 		lineageTag: a8bef131-0ae4-4eb0-a43e-adcc4d1382ba
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: purchases
 
 		annotation SummarizationSetBy = Automatic
@@ -30,7 +30,7 @@ table channel_analysis
 	column conversion_rate
 		dataType: double
 		lineageTag: c70745cb-0cb1-4a54-8497-6caccfd2e441
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: conversion_rate
 
 		annotation SummarizationSetBy = Automatic

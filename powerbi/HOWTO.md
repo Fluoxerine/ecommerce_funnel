@@ -59,20 +59,32 @@ powerbi/
 
 ### Step 1：生成数据源
 
+首先确保已运行过主分析（生成 `output/funnel_wide.csv`）：
+
 ```bash
 cd ecommerce_funnel_analysis
 python python/main.py
+```
+
+然后生成 Power BI 数据文件（不需要 MySQL/Docker）：
+
+```bash
+python -c "
+import sys; sys.path.insert(0, '.')
+from python.import_to_mysql import step5_export_powerbi
+step5_export_powerbi()
+"
 ```
 
 确认 `powerbi/data/` 目录下生成了以下 CSV：
 
 ```bash
 ls powerbi/data/
-# funnel_overview.csv
-# funnel_wide_export.csv
-# channel_analysis.csv
-# device_analysis.csv
-# country_analysis.csv
+# funnel_overview.csv      — 漏斗阶段汇总（5 行）
+# funnel_wide_export.csv   — 分层抽样宽表（~63K 行）
+# channel_analysis.csv     — 渠道维度（5 行）
+# device_analysis.csv      — 设备维度（4 行）
+# country_analysis.csv     — 国家维度（7 行）
 ```
 
 ### Step 2：打开报告
@@ -151,18 +163,18 @@ ls powerbi/data/
 | 可视化 | 类型 | 数据源 | 显示内容 |
 |:---|:---|:---|:---|
 | 渠道柱状图 | Clustered Bar | channel_analysis | 5 渠道转化率对比 |
-| 设备柱状图 | Clustered Bar | device_analysis | Desktop/Mobile/Tablet 转化率 |
+| 设备柱状图 | Clustered Bar | device_analysis | Desktop/Mobile/Tablet/UNKNOWN 转化率 |
 | 渠道×设备热力图 | Matrix | funnel_wide_export | 交叉维度转化率矩阵 |
 
 **关键数字**：
 
 | 渠道 | 会话数 | 转化率 | 特点 |
 |:---|---:|---:|:---|
-| Organic | 298,025 | 12.98% | 流量最大，转化率居中 |
-| Paid Search | 111,200 | 17.60% | 转化率最高 |
-| Direct | 99,842 | 12.02% | 转化率最低 |
-| Social | 71,262 | 14.60% | 中等 |
-| Email | 53,121 | 18.80% | 转化率最高（但流量小） |
+| Organic | 296,541 | 12.98% | 流量最大（46.8%），转化率居中 |
+| Email | 118,162 | 18.87% | 转化率最高 |
+| Direct | 94,398 | 12.02% | 转化率最低 |
+| Paid Search | 80,741 | 19.67% | 转化率最高之一，但流量小 |
+| Social | 43,608 | 17.22% | 中等流量和转化率 |
 
 ---
 
@@ -223,10 +235,10 @@ ls powerbi/data/
 
 | 表名 | 类型 | 行数 | 说明 |
 |:---|:---|:---:|:---|
-| `funnel_wide_export` | 导入 (CSV) | 633,450 | 会话级宽表，主事实表 |
+| `funnel_wide_export` | 导入 (CSV) | 63,344 | 会话级宽表（分层抽样 10%） |
 | `funnel_overview` | 导入 (CSV) | 5 | 漏斗阶段汇总 |
 | `channel_analysis` | 导入 (CSV) | 5 | 渠道维度分析 |
-| `device_analysis` | 导入 (CSV) | 3 | 设备维度分析 |
+| `device_analysis` | 导入 (CSV) | 4 | 设备维度分析（含 UNKNOWN） |
 | `country_analysis` | 导入 (CSV) | 7 | 国家维度分析 |
 | `loss_data` | 计算表 (DAX) | 4 | 损失金额 + PIE 优先级 |
 
@@ -384,27 +396,27 @@ pbi report validate  # 报告验证
 
 ### 当前实现
 
-`python/import_to_mysql.py` 负责生成 `powerbi/data/` 下的 CSV。数据来源：
+`python/import_to_mysql.py` 的 `step5_export_powerbi()` 负责生成 `powerbi/data/` 下的 CSV：
 
 ```python
-# 从 funnel_wide.csv 直接导出（完整 633,450 行）
-fw = pd.read_csv(OUTPUT_DIR / 'funnel_wide.csv')
-fw.to_csv(POWERBI_DATA / 'funnel_wide_export.csv', index=False)
-
-# 维度表从分析结果导出
-channel_analysis.to_csv(POWERBI_DATA / 'channel_analysis.csv', index=False)
-device_analysis.to_csv(POWERBI_DATA / 'device_analysis.csv', index=False)
-country_analysis.to_csv(POWERBI_DATA / 'country_analysis.csv', index=False)
+# funnel_overview — 5 阶段漏斗汇总（到达会话 + 购买 + 转化率）
+# channel_analysis — 5 渠道 sessions/purchases/conversion_rate
+# device_analysis — 4 设备类型 sessions/purchases/conversion_rate
+# country_analysis — 7 国家 sessions/purchases/conversion_rate
+# funnel_wide_export — 分层抽样（每渠道 10%，保底 1000 行）
 ```
+
+> 注意：运行主分析 `python python/main.py` 不会自动生成 powerbi/data 文件。需要单独运行 `python python/import_to_mysql.py` 或直接调用 `step5_export_powerbi()`。
 
 ### 已知局限
 
-- 当前使用 `head()` 限制导出行数（仅 1.6-7.9% 的采样率），非随机抽样
-- loss_data 需要在 TMDL 中手动更新，未自动化
+- funnel_wide_export 为分层抽样（每渠道 10%），非全量数据，部分精确计算需在主分析中完成
+- loss_data 需要在 TMDL 中手动更新，未自动化导出为 CSV
 - 无 Power BI 增量刷新配置
 
-### 改进方向（P1-15）
+### 改进方向（P1-15/16 + P2-7）
 
-1. 将 `head()` 替换为分层随机抽样（`df.groupby('traffic_source').sample(frac=0.1)`）
-2. loss_data 自动写入 powerbi/data/loss_data.csv
-3. 配置 Power BI 增量刷新策略
+1. loss_data 自动导出为 powerbi/data/loss_data.csv（当前需手动更新 TMDL）
+2. 增加 DAX 度量值自动生成脚本
+3. 增加趋势页和用户分层页
+4. 配置 Power BI 增量刷新策略

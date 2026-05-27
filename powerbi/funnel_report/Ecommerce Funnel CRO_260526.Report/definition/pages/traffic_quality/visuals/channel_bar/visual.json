@@ -1,0 +1,79 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "channel_bar",
+  "position": {
+    "x": 0,
+    "y": 0,
+    "z": 0,
+    "height": 384,
+    "width": 624,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "clusteredBarChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "channel_analysis"
+                    }
+                  },
+                  "Property": "traffic_source"
+                }
+              },
+              "queryRef": "channel_analysis.traffic_source",
+              "nativeQueryRef": "traffic_source",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "channel_analysis"
+                        }
+                      },
+                      "Property": "conversion_rate"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(channel_analysis.conversion_rate)",
+              "nativeQueryRef": "conversion_rate",
+              "displayName": "转化率",
+              "format": "0.00%"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'渠道转化率'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

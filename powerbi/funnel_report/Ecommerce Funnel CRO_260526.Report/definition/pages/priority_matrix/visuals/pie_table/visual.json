@@ -1,0 +1,137 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "pie_table",
+  "position": {
+    "x": 0,
+    "y": 384,
+    "z": 1000,
+    "height": 336,
+    "width": 1280,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "loss_data"
+                    }
+                  },
+                  "Property": "流失环节"
+                }
+              },
+              "queryRef": "loss_data.流失环节",
+              "nativeQueryRef": "流失环节"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "loss_data"
+                    }
+                  },
+                  "Property": "流失会话数"
+                }
+              },
+              "queryRef": "loss_data.流失会话数",
+              "nativeQueryRef": "流失会话数"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "loss_data"
+                    }
+                  },
+                  "Property": "损失金额"
+                }
+              },
+              "queryRef": "loss_data.损失金额",
+              "nativeQueryRef": "损失金额"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "loss_data"
+                    }
+                  },
+                  "Property": "Potential"
+                }
+              },
+              "queryRef": "loss_data.Potential",
+              "nativeQueryRef": "Potential"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "loss_data"
+                    }
+                  },
+                  "Property": "Importance"
+                }
+              },
+              "queryRef": "loss_data.Importance",
+              "nativeQueryRef": "Importance"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "loss_data"
+                    }
+                  },
+                  "Property": "Ease"
+                }
+              },
+              "queryRef": "loss_data.Ease",
+              "nativeQueryRef": "Ease"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "loss_data"
+                    }
+                  },
+                  "Property": "PIE得分"
+                }
+              },
+              "queryRef": "loss_data.PIE得分",
+              "nativeQueryRef": "PIE得分"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'PIE 数据明细'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

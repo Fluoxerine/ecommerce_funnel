@@ -1,0 +1,209 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "churn_table",
+  "position": {
+    "x": 0,
+    "y": 352,
+    "z": 2000,
+    "height": 352,
+    "width": 1264,
+    "tabOrder": 2000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "session_id"
+                }
+              },
+              "queryRef": "funnel_wide_export.session_id",
+              "nativeQueryRef": "session_id"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "traffic_source"
+                }
+              },
+              "queryRef": "funnel_wide_export.traffic_source",
+              "nativeQueryRef": "traffic_source"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "device_type"
+                }
+              },
+              "queryRef": "funnel_wide_export.device_type",
+              "nativeQueryRef": "device_type"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "country"
+                }
+              },
+              "queryRef": "funnel_wide_export.country",
+              "nativeQueryRef": "country"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_wide_export"
+                        }
+                      },
+                      "Property": "step1_home"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(funnel_wide_export.step1_home)",
+              "nativeQueryRef": "step1_home"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_wide_export"
+                        }
+                      },
+                      "Property": "step2_plp"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(funnel_wide_export.step2_plp)",
+              "nativeQueryRef": "step2_plp"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_wide_export"
+                        }
+                      },
+                      "Property": "step3_pdp"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(funnel_wide_export.step3_pdp)",
+              "nativeQueryRef": "step3_pdp"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_wide_export"
+                        }
+                      },
+                      "Property": "step4_cart"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(funnel_wide_export.step4_cart)",
+              "nativeQueryRef": "step4_cart"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_wide_export"
+                        }
+                      },
+                      "Property": "step5_checkout"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(funnel_wide_export.step5_checkout)",
+              "nativeQueryRef": "step5_checkout"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_wide_export"
+                        }
+                      },
+                      "Property": "is_purchased"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(funnel_wide_export.is_purchased)",
+              "nativeQueryRef": "is_purchased"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'会话明细'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

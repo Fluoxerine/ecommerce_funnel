@@ -1,0 +1,145 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "funnel_bar",
+  "position": {
+    "x": 336,
+    "y": 0,
+    "z": 3000,
+    "height": 720,
+    "width": 944,
+    "tabOrder": 3000
+  },
+  "visual": {
+    "visualType": "funnel",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_overview"
+                    }
+                  },
+                  "Property": "漏斗阶段"
+                }
+              },
+              "queryRef": "funnel_overview.漏斗阶段",
+              "nativeQueryRef": "漏斗阶段",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_overview"
+                        }
+                      },
+                      "Property": "到达会话数"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(funnel_overview.到达会话数)",
+              "nativeQueryRef": "到达会话数 的总和",
+              "format": "#,##0"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Aggregation": {
+                "Expression": {
+                  "Column": {
+                    "Expression": {
+                      "SourceRef": {
+                        "Entity": "funnel_overview"
+                      }
+                    },
+                    "Property": "到达会话数"
+                  }
+                },
+                "Function": 0
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'漏斗各阶段会话数'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "20D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "4a0a4b53e318cf0e5988",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "funnel_overview"
+              }
+            },
+            "Property": "漏斗阶段"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "b793da725ad2057be1c1",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "funnel_overview"
+                  }
+                },
+                "Property": "到达会话数"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
+  }
+}

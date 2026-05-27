@@ -1,11 +1,3 @@
-relationship AutoDetected_0e8a1d73-9c24-4696-9421-2344647788cb
-	fromColumn: funnel_overview.traffic_source
-	toColumn: channel_analysis.traffic_source
-
-relationship AutoDetected_b2dc4362-cd49-4cf0-b268-afbfb1257182
-	fromColumn: funnel_overview.country
-	toColumn: country_analysis.country
-
 relationship b8df4b2f-517e-4a4d-b58f-31637cab5947
 	joinOnDateBehavior: datePartOnly
 	fromColumn: funnel_wide_export.session_start
@@ -38,11 +30,4 @@ relationship AutoDetected_c4f4a966-d4ab-464d-9af6-c8f6b154f8f0
 relationship AutoDetected_0843731d-5eeb-4f26-bae8-2808dbaa58c8
 	fromColumn: funnel_wide_export.country
 	toColumn: country_analysis.country
-
-relationship AutoDetected_9f21df58-79bf-48aa-a64c-776af54dcbd2
-	isActive: false
-	crossFilteringBehavior: bothDirections
-	fromCardinality: one
-	fromColumn: funnel_overview.session_id
-	toColumn: funnel_wide_export.session_id
 

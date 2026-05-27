@@ -1,0 +1,96 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "channel_device_matrix",
+  "position": {
+    "x": 0,
+    "y": 400,
+    "z": 2000,
+    "height": 288,
+    "width": 640,
+    "tabOrder": 2000
+  },
+  "visual": {
+    "visualType": "pivotTable",
+    "query": {
+      "queryState": {
+        "Columns": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "device_type"
+                }
+              },
+              "queryRef": "funnel_wide_export.device_type",
+              "nativeQueryRef": "device_type",
+              "active": true
+            }
+          ]
+        },
+        "Rows": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "funnel_wide_export"
+                    }
+                  },
+                  "Property": "traffic_source"
+                }
+              },
+              "queryRef": "funnel_wide_export.traffic_source",
+              "nativeQueryRef": "traffic_source",
+              "active": true
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "funnel_wide_export"
+                        }
+                      },
+                      "Property": "is_purchased"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(funnel_wide_export.is_purchased)",
+              "nativeQueryRef": "is_purchased"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'渠道 X 设备交叉'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

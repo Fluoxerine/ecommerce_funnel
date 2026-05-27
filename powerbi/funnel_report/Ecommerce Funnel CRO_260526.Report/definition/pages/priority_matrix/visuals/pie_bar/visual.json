@@ -1,0 +1,77 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "pie_bar",
+  "position": {
+    "x": 0,
+    "y": 0,
+    "z": 0,
+    "height": 384,
+    "width": 1280,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "barChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "loss_data"
+                    }
+                  },
+                  "Property": "流失环节"
+                }
+              },
+              "queryRef": "loss_data.流失环节",
+              "nativeQueryRef": "流失环节",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "loss_data"
+                        }
+                      },
+                      "Property": "PIE得分"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(loss_data.PIE得分)",
+              "nativeQueryRef": "PIE得分"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'PIE 优化优先级'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "loss_bar",
+  "position": {
+    "x": 50,
+    "y": 50,
+    "z": 0,
+    "height": 300,
+    "width": 600,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "barChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "loss_data"
+                    }
+                  },
+                  "Property": "流失环节"
+                }
+              },
+              "queryRef": "loss_data.流失环节",
+              "nativeQueryRef": "流失环节",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "loss_data"
+                        }
+                      },
+                      "Property": "损失金额"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(loss_data.损失金额)",
+              "nativeQueryRef": "损失金额"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'各环节损失金额'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

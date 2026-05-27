@@ -1,7 +1,10 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/pagesMetadata/1.0.0/schema.json",
   "pageOrder": [
-    "41bbc7038f8d890316cc"
+    "funnel_health",
+    "traffic_quality",
+    "churn_diagnostics",
+    "priority_matrix"
   ],
-  "activePageName": "41bbc7038f8d890316cc"
+  "activePageName": "funnel_health"
 }
