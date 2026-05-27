@@ -2,29 +2,15 @@ cultureInfo zh-CN
 
 	linguisticMetadata =
 			{
-			  "Version": "2.0.0",
+			  "Version": "1.0.0",
 			  "Language": "en-US",
 			  "Entities": {
 			    "funnel_wide_export.column": {
-			      "Definition": {
-			        "Binding": {
-			          "ConceptualEntity": "funnel_wide_export",
-			          "ConceptualProperty": "会话转化率"
-			        }
+			      "Binding": {
+			        "ConceptualEntity": "funnel_wide_export",
+			        "ConceptualProperty": "会话转化率"
 			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "转化率": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
+			      "State": "Generated"
 			    }
 			  }
 			}

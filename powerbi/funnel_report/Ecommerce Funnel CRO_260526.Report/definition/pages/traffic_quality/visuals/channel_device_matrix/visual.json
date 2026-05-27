@@ -3,9 +3,9 @@
   "name": "channel_device_matrix",
   "position": {
     "x": 0,
-    "y": 360,
+    "y": 368,
     "z": 2000,
-    "height": 360,
+    "height": 352,
     "width": 640,
     "tabOrder": 2000
   },
@@ -76,6 +76,47 @@
         }
       }
     },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "17D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "rowHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "17D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "16D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
     "visualContainerObjects": {
       "title": [
         {
@@ -92,5 +133,56 @@
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "9e51efdab5195c4bcdd7",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "funnel_wide_export"
+              }
+            },
+            "Property": "device_type"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "c51b45975b63874d109e",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "funnel_wide_export"
+              }
+            },
+            "Property": "traffic_source"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "527a9a15e219c29f6873",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "funnel_wide_export"
+                  }
+                },
+                "Property": "is_purchased"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

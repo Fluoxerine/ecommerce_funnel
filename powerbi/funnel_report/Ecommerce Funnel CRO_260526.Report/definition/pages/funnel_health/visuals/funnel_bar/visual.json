@@ -58,6 +58,21 @@
         }
       }
     },
+    "objects": {
+      "labels": [
+        {
+          "properties": {
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
     "visualContainerObjects": {
       "title": [
         {
@@ -65,7 +80,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'漏斗各阶段会话数'"
+                  "Value": "'页面覆盖分析（宽松漏斗）'"
                 }
               }
             },

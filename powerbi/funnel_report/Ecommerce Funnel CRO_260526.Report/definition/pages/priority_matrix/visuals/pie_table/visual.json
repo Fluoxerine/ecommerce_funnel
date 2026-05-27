@@ -117,6 +117,134 @@
         }
       }
     },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "19D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "16D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "170.53846153846155D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "loss_data.流失环节"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "168.76923076923077D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "loss_data.流失会话数"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "153.84615384615384D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "loss_data.损失金额"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "126.23076923076923D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "loss_data.Potential"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "161.15384615384616D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "loss_data.Importance"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "78.23076923076923D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "loss_data.Ease"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "113.46153846153845D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "loss_data.PIE得分"
+          }
+        }
+      ]
+    },
     "visualContainerObjects": {
       "title": [
         {

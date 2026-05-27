@@ -33,12 +33,27 @@
               },
               "queryRef": "Sum(funnel_wide_export.is_purchased)",
               "nativeQueryRef": "is_purchased",
-              "format": "#,##0",
-              "displayName": "购买会话数"
+              "displayName": "购买会话数",
+              "format": "#,##0"
             }
           ]
         }
       }
+    },
+    "objects": {
+      "labels": [
+        {
+          "properties": {
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            }
+          }
+        }
+      ]
     },
     "visualContainerObjects": {
       "title": [
