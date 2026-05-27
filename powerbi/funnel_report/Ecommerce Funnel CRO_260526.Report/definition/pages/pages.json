@@ -4,7 +4,8 @@
     "funnel_health",
     "traffic_quality",
     "churn_diagnostics",
-    "priority_matrix"
+    "priority_matrix",
+    "user_analysis"
   ],
   "activePageName": "funnel_health"
 }

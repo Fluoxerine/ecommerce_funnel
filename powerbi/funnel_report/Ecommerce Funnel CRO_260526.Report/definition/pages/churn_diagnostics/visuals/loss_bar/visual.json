@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "loss_bar",
   "position": {
-    "x": 50,
-    "y": 50,
+    "x": 0,
+    "y": 0,
     "z": 0,
-    "height": 300,
-    "width": 600,
+    "height": 340,
+    "width": 640,
     "tabOrder": 0
   },
   "visual": {

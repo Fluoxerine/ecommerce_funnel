@@ -25,6 +25,7 @@ ref table LocalDateTable_74df79b9-ac68-421b-a5f1-801cf21beadd
 ref table funnel_overview
 ref table 漏斗步骤
 ref table loss_data
+ref table 行为步骤
 
 ref cultureInfo zh-CN
 

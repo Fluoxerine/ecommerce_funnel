@@ -3,9 +3,9 @@
   "name": "channel_device_matrix",
   "position": {
     "x": 0,
-    "y": 400,
+    "y": 360,
     "z": 2000,
-    "height": 288,
+    "height": 360,
     "width": 640,
     "tabOrder": 2000
   },

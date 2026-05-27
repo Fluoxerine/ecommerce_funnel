@@ -1,16 +1,16 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
-  "name": "churn_by_dim",
+  "name": "new_returning_bar",
   "position": {
     "x": 640,
     "y": 0,
-    "z": 1000,
-    "height": 340,
+    "z": 1,
+    "height": 380,
     "width": 640,
-    "tabOrder": 1000
+    "tabOrder": 1
   },
   "visual": {
-    "visualType": "barChart",
+    "visualType": "clusteredBarChart",
     "query": {
       "queryState": {
         "Category": {
@@ -23,11 +23,11 @@
                       "Entity": "funnel_wide_export"
                     }
                   },
-                  "Property": "traffic_source"
+                  "Property": "gender"
                 }
               },
-              "queryRef": "funnel_wide_export.traffic_source",
-              "nativeQueryRef": "traffic_source",
+              "queryRef": "funnel_wide_export.gender",
+              "nativeQueryRef": "gender",
               "active": true
             }
           ]
@@ -52,7 +52,8 @@
               },
               "queryRef": "Sum(funnel_wide_export.is_purchased)",
               "nativeQueryRef": "is_purchased",
-              "displayName": "购买数"
+              "displayName": "购买会话数",
+              "format": "#,##0"
             }
           ]
         }
@@ -62,10 +63,24 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'各渠道购买转化'"
+                  "Value": "'性别 × 转化率'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "20D"
                 }
               }
             }
@@ -74,5 +89,42 @@
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "e4443b42cec7b0108ee9",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "funnel_wide_export"
+              }
+            },
+            "Property": "gender"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "8a056a4037bf75fe6070",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "funnel_wide_export"
+                  }
+                },
+                "Property": "is_purchased"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

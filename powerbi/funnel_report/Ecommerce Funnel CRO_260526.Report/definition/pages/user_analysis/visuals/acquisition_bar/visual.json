@@ -1,16 +1,16 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
-  "name": "funnel_bar",
+  "name": "acquisition_bar",
   "position": {
-    "x": 336,
-    "y": 0,
-    "z": 3000,
-    "height": 360,
-    "width": 472,
-    "tabOrder": 3000
+    "x": 0,
+    "y": 380,
+    "z": 2,
+    "height": 340,
+    "width": 1280,
+    "tabOrder": 2
   },
   "visual": {
-    "visualType": "funnel",
+    "visualType": "clusteredBarChart",
     "query": {
       "queryState": {
         "Category": {
@@ -20,14 +20,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "funnel_overview"
+                      "Entity": "funnel_wide_export"
                     }
                   },
-                  "Property": "漏斗阶段"
+                  "Property": "acquisition_channel"
                 }
               },
-              "queryRef": "funnel_overview.漏斗阶段",
-              "nativeQueryRef": "漏斗阶段",
+              "queryRef": "funnel_wide_export.acquisition_channel",
+              "nativeQueryRef": "acquisition_channel",
               "active": true
             }
           ]
@@ -41,17 +41,18 @@
                     "Column": {
                       "Expression": {
                         "SourceRef": {
-                          "Entity": "funnel_overview"
+                          "Entity": "funnel_wide_export"
                         }
                       },
-                      "Property": "到达会话数"
+                      "Property": "is_purchased"
                     }
                   },
                   "Function": 0
                 }
               },
-              "queryRef": "Sum(funnel_overview.到达会话数)",
-              "nativeQueryRef": "到达会话数",
+              "queryRef": "Sum(funnel_wide_export.is_purchased)",
+              "nativeQueryRef": "is_purchased",
+              "displayName": "购买会话数",
               "format": "#,##0"
             }
           ]
@@ -62,10 +63,17 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'漏斗各阶段会话数'"
+                  "Value": "'获客渠道 × 转化率'"
                 }
               }
             },
@@ -85,31 +93,31 @@
   "filterConfig": {
     "filters": [
       {
-        "name": "ad458a3b1d5153641337",
+        "name": "3dbcefc6fdb40d9eaab6",
         "field": {
           "Column": {
             "Expression": {
               "SourceRef": {
-                "Entity": "funnel_overview"
+                "Entity": "funnel_wide_export"
               }
             },
-            "Property": "漏斗阶段"
+            "Property": "acquisition_channel"
           }
         },
         "type": "Categorical"
       },
       {
-        "name": "911bd9d8023f07c36a3d",
+        "name": "2a690513ebcdc8b28b8c",
         "field": {
           "Aggregation": {
             "Expression": {
               "Column": {
                 "Expression": {
                   "SourceRef": {
-                    "Entity": "funnel_overview"
+                    "Entity": "funnel_wide_export"
                   }
                 },
-                "Property": "到达会话数"
+                "Property": "is_purchased"
               }
             },
             "Function": 0

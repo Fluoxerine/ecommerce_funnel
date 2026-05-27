@@ -1,16 +1,16 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
-  "name": "churn_by_dim",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "country_bar",
   "position": {
     "x": 640,
-    "y": 0,
-    "z": 1000,
-    "height": 340,
+    "y": 360,
+    "z": 2001,
+    "height": 360,
     "width": 640,
-    "tabOrder": 1000
+    "tabOrder": 2001
   },
   "visual": {
-    "visualType": "barChart",
+    "visualType": "clusteredBarChart",
     "query": {
       "queryState": {
         "Category": {
@@ -20,14 +20,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "funnel_wide_export"
+                      "Entity": "country_analysis"
                     }
                   },
-                  "Property": "traffic_source"
+                  "Property": "country"
                 }
               },
-              "queryRef": "funnel_wide_export.traffic_source",
-              "nativeQueryRef": "traffic_source",
+              "queryRef": "country_analysis.country",
+              "nativeQueryRef": "country",
               "active": true
             }
           ]
@@ -41,23 +41,28 @@
                     "Column": {
                       "Expression": {
                         "SourceRef": {
-                          "Entity": "funnel_wide_export"
+                          "Entity": "country_analysis"
                         }
                       },
-                      "Property": "is_purchased"
+                      "Property": "conversion_rate"
                     }
                   },
                   "Function": 0
                 }
               },
-              "queryRef": "Sum(funnel_wide_export.is_purchased)",
-              "nativeQueryRef": "is_purchased",
-              "displayName": "购买数"
+              "queryRef": "Sum(country_analysis.conversion_rate)",
+              "nativeQueryRef": "conversion_rate",
+              "displayName": "转化率",
+              "format": "0.00%"
             }
           ]
+        },
+        "Legend": {
+          "projections": []
         }
       }
     },
+    "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
       "title": [
         {
@@ -65,14 +70,13 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'各渠道购买转化'"
+                  "Value": "'国家转化率'"
                 }
               }
             }
           }
         }
       ]
-    },
-    "drillFilterOtherVisuals": true
+    }
   }
 }

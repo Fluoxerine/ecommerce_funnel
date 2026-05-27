@@ -28,12 +28,13 @@
                       "Property": "is_purchased"
                     }
                   },
-                  "Function": 3
+                  "Function": 0
                 }
               },
-              "queryRef": "Average(funnel_wide_export.is_purchased)",
+              "queryRef": "Sum(funnel_wide_export.is_purchased)",
               "nativeQueryRef": "is_purchased",
-              "format": "0.00%"
+              "format": "#,##0",
+              "displayName": "购买会话数"
             }
           ]
         }
@@ -53,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'总转化率'"
+                  "Value": "'总购买会话数'"
                 }
               }
             },

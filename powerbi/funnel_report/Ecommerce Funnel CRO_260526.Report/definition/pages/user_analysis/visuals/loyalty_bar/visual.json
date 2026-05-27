@@ -1,16 +1,16 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
-  "name": "churn_by_dim",
+  "name": "loyalty_bar",
   "position": {
-    "x": 640,
+    "x": 0,
     "y": 0,
-    "z": 1000,
-    "height": 340,
+    "z": 0,
+    "height": 380,
     "width": 640,
-    "tabOrder": 1000
+    "tabOrder": 0
   },
   "visual": {
-    "visualType": "barChart",
+    "visualType": "clusteredBarChart",
     "query": {
       "queryState": {
         "Category": {
@@ -23,11 +23,11 @@
                       "Entity": "funnel_wide_export"
                     }
                   },
-                  "Property": "traffic_source"
+                  "Property": "loyalty_tier"
                 }
               },
-              "queryRef": "funnel_wide_export.traffic_source",
-              "nativeQueryRef": "traffic_source",
+              "queryRef": "funnel_wide_export.loyalty_tier",
+              "nativeQueryRef": "loyalty_tier",
               "active": true
             }
           ]
@@ -52,7 +52,8 @@
               },
               "queryRef": "Sum(funnel_wide_export.is_purchased)",
               "nativeQueryRef": "is_purchased",
-              "displayName": "购买数"
+              "displayName": "购买会话数",
+              "format": "#,##0"
             }
           ]
         }
@@ -62,10 +63,24 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'各渠道购买转化'"
+                  "Value": "'忠诚度 × 转化率'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "20D"
                 }
               }
             }
@@ -74,5 +89,42 @@
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "f7cd4653b43b7ce8dfec",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "funnel_wide_export"
+              }
+            },
+            "Property": "loyalty_tier"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "f6aa8d228cdbdfa82c2d",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "funnel_wide_export"
+                  }
+                },
+                "Property": "is_purchased"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

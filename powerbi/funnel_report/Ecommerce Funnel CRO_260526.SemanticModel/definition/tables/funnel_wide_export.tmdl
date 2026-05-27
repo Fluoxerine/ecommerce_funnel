@@ -1,6 +1,10 @@
 table funnel_wide_export
 	lineageTag: a24d8e00-0fde-4ecc-98f8-bd0302baf149
 
+	measure 会话转化率 = DIVIDE(SUM(funnel_wide_export[is_purchased]), COUNT(funnel_wide_export[session_id]))
+		formatString: 0.00%
+		lineageTag: e8d51cda-9260-4e86-8069-92587bbf4c15
+
 	column session_id
 		dataType: int64
 		formatString: 0

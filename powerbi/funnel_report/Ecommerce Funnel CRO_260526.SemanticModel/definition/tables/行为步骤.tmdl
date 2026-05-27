@@ -1,0 +1,50 @@
+table 行为步骤
+	lineageTag: 5a6b7c8d-9e0f-1a2b-3c4d-5e6f7a8b9c0d
+
+	column 行为阶段
+		lineageTag: 6b7c8d9e-0f1a-2b3c-4d5e-6f7a8b9c0d1e
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [行为阶段]
+		sortByColumn: 行为排序
+
+		annotation SummarizationSetBy = Automatic
+
+	column 独立会话数
+		dataType: int64
+		formatString: 0
+		lineageTag: 7c8d9e0f-1a2b-3c4d-5e6f-7a8b9c0d1e2f
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [独立会话数]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 行为排序
+		dataType: int64
+		formatString: 0
+		lineageTag: 8d9e0f1a-2b3c-4d5e-6f7a-8b9c0d1e2f3a
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [行为排序]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 行为步骤 = calculated
+		mode: import
+		source =
+				
+				DATATABLE(
+				    "行为阶段", STRING,
+				    "独立会话数", INTEGER,
+				    "行为排序", INTEGER,
+				    {
+				        {"浏览", 526869, 1},
+				        {"点击", 289028, 2},
+				        {"加购", 231499, 3},
+				        {"购买", 95535, 4}
+				    }
+				)
+
+	annotation PBI_Id = 5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d
+
