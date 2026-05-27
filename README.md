@@ -1,6 +1,6 @@
 # E-Commerce Funnel Analysis & CRO
 
-> 基于 220 万条用户行为数据的端到端转化率优化分析。这不是一个"跑一遍代码出结果"的脚本集合，而是一个从业务问题出发、经过多轮 AI 协作迭代、最终产出可执行策略的完整数据分析项目。
+> 基于 220 万条用户行为数据的端到端转化率优化分析。定位核心瓶颈（详情页→购物车交叉到达率仅 25.81%），量化年损失 ¥933 万，给出 P0/P1/P2 优先级策略及 ROI 估算。不是"跑一遍代码出结果"的脚本集合，而是从业务问题出发、经过多轮 AI 协作迭代、最终产出可执行策略的完整数据分析项目。
 
 [![Python](https://img.shields.io/badge/Python-3.13+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?logo=mysql&logoColor=white)](https://www.mysql.com/)
