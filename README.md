@@ -115,13 +115,21 @@
 
 损失公式：**流失会话数 × 预期转化率 × 客单价 ¥90.36**
 
+其中"预期转化率"为该环节到达者中最终购买的比例——而非假设所有流失用户 100% 会购买（后者会高估约 5.8 倍，¥59.76M → ¥9.33M）。但公式隐含一个假设：**流失用户与留存用户的购买概率相同**。真实业务中流失用户购买意愿往往更低，因此当前估算应理解为损失的上界，实际可能在当前值的 60-100% 区间。面试中能解释"我的数字在什么假设下成立"，比给出一个精确数字更重要。
+
 但这只是第一步。真正的策略闭环需要回答"然后呢？"——用 PIE（Potential × Importance × Ease）矩阵给每个瓶颈打分，按优先级排 P0/P1/P2，并估算每个优化方向的一次性投入和年化回报。
 
-完整的 CRO 策略文档见 [operations/cro_strategy.md](operations/cro_strategy.md)，涵盖实施人天、成本估算和 ROI 预估。
+完整的 CRO 策略文档见 [operations/cro_strategy.md](operations/cro_strategy.md)，涵盖实施人天、成本估算、ROI 预估和 What-If 增量模拟。
 
 ---
 
 ## 4. 核心可视化结果
+
+### 30 秒叙事线：从数字到决策
+
+如果只有半分钟向业务方展示，这条线是：
+
+> **年损失 ¥933 万**（首页 KPI）→ **74% 的用户在详情页看完没加购**（瓶颈定位）→ **详情页改版是 P0，预期 ROI 1.5-3:1**（可执行策略）→ **不同渠道需不同方案**：Social / Paid Search 优化详情页，Email / Direct 优化结算页（差异化落地）。
 
 ### 页面漏斗 — 一图定位瓶颈
 
@@ -175,6 +183,35 @@ PIE = Potential × Importance × Ease（WiderFunnel 方法论，10 分制）。�
 
 ![访问留存](output/charts/16b_visit_cohort_heatmap.png)
 
+### Power BI 报表预览（5 页交互式）
+
+PBIR 格式报表，双击 `Ecommerce Funnel CRO.pbip` 即可在 Power BI Desktop 中打开，支持交叉筛选和交互式下钻。[powerbi/HOWTO.md](powerbi/HOWTO.md) 有完整的打开方式说明。
+
+**第 1 页 — 漏斗健康仪表板 (Funnel Health)**
+KPI 概览（总会话/转化率/年损失）+ 页面漏斗 + 行为漏斗 + 三年月度趋势。一页回答"发生了什么"。
+
+![PBI Page 1](powerbi/funnel_report/Ecommerce%20Funnel%20CRO_260526_页面_1.png)
+
+**第 2 页 — 流量质量 (Traffic Quality)**
+按渠道/设备/国家拆解转化率和流量占比，横向对比定位不同维度的瓶颈差异。
+
+![PBI Page 2](powerbi/funnel_report/Ecommerce%20Funnel%20CRO_260526_页面_2.png)
+
+**第 3 页 — 流失诊断 (Churn Diagnostics)**
+各环节流失瀑布 + 流失用户行为特征对比表（含 Cohen's d 效应量）+ 渠道×设备维度拆解。
+
+![PBI Page 3](powerbi/funnel_report/Ecommerce%20Funnel%20CRO_260526_页面_3.png)
+
+**第 4 页 — 优先级矩阵 (Priority Matrix)**
+PIE 评分条形图 + 策略优先级表（P0/P1/P2/P3 + 速赢标注），回答"先做什么、ROI 多少"。
+
+![PBI Page 4](powerbi/funnel_report/Ecommerce%20Funnel%20CRO_260526_页面_4.png)
+
+**第 5 页 — 用户分析 (User Analysis)**
+忠诚度等级 × 转化率 + 获客渠道 × 长期转化 + 新老用户漏斗对比，回答"不同用户群的行为差异在哪"。
+
+![PBI Page 5](powerbi/funnel_report/Ecommerce%20Funnel%20CRO_260526_页面_5.png)
+
 ---
 
 ## 5. 遇到的问题与应对
@@ -205,7 +242,26 @@ PIE = Potential × Importance × Ease（WiderFunnel 方法论，10 分制）。�
 
 ---
 
-## 6. 最终成果
+## 6. 测试覆盖
+
+项目包含 **47 个 pytest 用例**（全部通过，~9s），覆盖三个维度、四个测试文件：
+
+| 文件 | 覆盖范围 | 用例数 | 关键边界值测试 |
+| :--- | :--- | ---: | :--- |
+| `tests/test_funnel_analysis.py` | 漏斗计算、损失量化、PIE 优先级、流失特征、统计检验、Cohort 留存 | 22 | 流失会话数 ≤ 总会话、交叉到达率 ≤ 100%、转化率单调递减、Bonferroni α=0.0125 |
+| `tests/test_data_cleaning.py` | 会话时长异常值过滤、traffic_source 标准化、漏斗宽表构建 | 13 | 空 DataFrame 处理、缺失列防御、步骤列二进制约束 |
+| `tests/test_integration.py` | 端到端管道完整性、错误传播、空数据边界 | 12 | `_safe_plot` 单图失败不中断、`_stage_runner` 错误传递、无 transactions 时 AOV 回退 |
+
+测试设计原则：构造数据使用偏态分布（Gamma/Poisson/LogNormal）模拟真实电商数据，而非均匀随机分布。损失计算有专门的测试验证 AOV 来源切换逻辑（transactions 表单笔均值 vs funnel_wide 估算）。
+
+```bash
+pytest tests/ -v
+# 47 passed in ~9s
+```
+
+---
+
+## 7. 最终成果
 
 ### 六阶段完整产出
 
@@ -235,7 +291,7 @@ PIE = Potential × Importance × Ease（WiderFunnel 方法论，10 分制）。�
 
 ---
 
-## 7. AI 协作方式：Claude Code + OpenClaw 的双引擎工作流
+## 8. AI 协作方式：Claude Code + OpenClaw 的双引擎工作流
 
 这个项目的另一个亮点是**与 AI 的深度协作方式**。不是"让 AI 帮我写代码"，而是建立了一套 AI 辅助的数据分析工作流。
 
@@ -330,7 +386,7 @@ ecommerce_funnel_analysis/
 │   ├── visualization.py      # 23 张图表 (matplotlib + plotly)
 │   └── main.py               # 主入口 (支持 --skip-viz / --output)
 ├── sql/                      # 8 个独立 SQL 脚本 (MySQL 8.4)
-├── powerbi/                  # Power BI PBIR 报表 (4 页交互式)
+├── powerbi/                  # Power BI PBIR 报表 (5 页交互式 + PNG 预览)
 ├── docs/                     # 分析文档 + 多 AI 交叉 review 记录
 ├── operations/               # CRO 策略详情 (含实施成本 + ROI 估算)
 ├── .openclaw/                # OpenClaw 工作区配置
@@ -360,7 +416,7 @@ python python/main.py
 | **分析框架设计** | 六阶段闭环 + 双漏斗模型 + 20+ 维度下钻体系 |
 | **统计学基础** | t 检验、Cohen's d、Bonferroni 校正、卡方检验——知其所以然 |
 | **SQL 能力** | 8 个独立脚本，从建表到运营导出，含窗口函数和 CTE |
-| **Python 工程** | 模块化设计、CLI 参数化、日志系统、单元测试 |
+| **Python 工程** | 模块化设计、CLI 参数化、日志系统、47 个 pytest 单元测试 + 集成测试 |
 | **数据可视化** | matplotlib 静态图表 + plotly 交互式图表 + Power BI 报表 |
 | **商业敏感度** | 损失金额量化、ROI 估算、P0/P1/P2 优先级排序 |
 | **局限性意识** | 明确标注模拟数据、指标口径差异、不做虚假承诺 |
