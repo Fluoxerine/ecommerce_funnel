@@ -35,7 +35,7 @@ from python.visualization import (
     plot_churn_by_channel, plot_pie_matrix, plot_category_funnel,
     plot_strict_vs_coverage, plot_deep_link_comparison,
     plot_new_vs_returning, plot_weekend_comparison, plot_cohort_heatmap,
-    plot_visit_cohort_heatmap,
+    plot_visit_cohort_heatmap, plot_hero_kpi, plot_roi_comparison,
     plot_page_funnel_interactive, plot_event_funnel_interactive,
     plot_strict_page_funnel, plot_strict_page_funnel_interactive,
     set_chart_meta,
@@ -161,16 +161,17 @@ def _run_stage6_strategy_and_baseline(funnel_wide, loss_df):
 
 
 def _run_visualization(funnel_wide, cleaning_stats, stage3, loss_df, pie_df,
-                       churn_matrix, churn_features):
+                       churn_matrix, churn_features, sim_df):
     """生成全部图表 — 单图失败不中断其他图"""
     set_chart_meta(len(funnel_wide))
     t_viz = time.time()
     logger.info("=" * 60)
-    logger.info("生成可视化图表 (25 张: 22 静态 PNG + 3 交互式 HTML)")
+    logger.info("生成可视化图表 (28 张: 25 静态 PNG + 3 交互式 HTML)")
     logger.info("=" * 60)
 
     plots = [
         ('00_cleaning_funnel', plot_cleaning_funnel, cleaning_stats),
+        ('17_hero_kpi', plot_hero_kpi, loss_df),
         ('01_page_funnel', plot_page_funnel, stage3['page_funnel']),
         ('02_event_funnel', plot_event_funnel, stage3['event_funnel']),
         ('03_channel_funnels', plot_channel_funnels, stage3['channel_funnels']),
@@ -182,6 +183,7 @@ def _run_visualization(funnel_wide, cleaning_stats, stage3, loss_df, pie_df,
         ('08_duration_conversion', plot_duration_conversion, stage3['duration_df']),
         ('09_churn_by_channel', plot_churn_by_channel, churn_matrix),
         ('10_pie_matrix', plot_pie_matrix, pie_df),
+        ('18_roi_comparison', plot_roi_comparison, sim_df, loss_df),
         ('11_category_funnel', plot_category_funnel, stage3['cat_df']),
         ('12_strict_vs_coverage', plot_strict_vs_coverage, stage3['strict_funnel']),
         ('13_deep_link_analysis', plot_deep_link_comparison,
@@ -237,7 +239,7 @@ def main() -> None:
         "阶段 6/6: 策略摘要 + 基准快照 + What-If",
         _run_stage6_strategy_and_baseline, funnel_wide, loss_df)
     _run_visualization(funnel_wide, cleaning_stats, stage3, loss_df, pie_df,
-                       churn_matrix, churn_features)
+                       churn_matrix, churn_features, sim_df)
 
     total_elapsed = time.time() - t_start
     logger.info("=" * 60)

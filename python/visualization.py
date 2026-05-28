@@ -296,7 +296,7 @@ def plot_event_funnel(funnel_df: 'pd.DataFrame') -> None:
 # 03 — 渠道专属漏斗 (5 面板)
 # ═══════════════════════════════════════════════════════════
 def plot_channel_funnels(channel_funnels: dict[str, 'pd.DataFrame']) -> None:
-    fig = plt.figure(figsize=(22, 13))
+    fig = plt.figure(figsize=(22, 14))
 
     first_df = next(iter(channel_funnels.values()))
     _rate_col = next(
@@ -306,6 +306,15 @@ def plot_channel_funnels(channel_funnels: dict[str, 'pd.DataFrame']) -> None:
     sorted_channels = sorted(channel_funnels.keys(),
                              key=lambda ch: channel_funnels[ch].iloc[-1][_rate_col],
                              reverse=True)
+
+    # 每个渠道的瓶颈环节名称 (基于漏斗分析结果)
+    bottleneck_label_map = {
+        'Social': '瓶颈: 详情页→购物车\n优化: UGC + 社会证明',
+        'Paid Search': '瓶颈: 详情页→购物车\n优化: 落地页直显加购按钮',
+        'Organic': '瓶颈: 详情页→购物车\n优化: SEO + 商品信息结构化',
+        'Email': '瓶颈: 购物车→结算页\n优化: 邮件直链预填结算页',
+        'Direct': '瓶颈: 购物车→结算页\n优化: 回头客快捷结算',
+    }
 
     for i, ch in enumerate(sorted_channels):
         ax = fig.add_subplot(2, 3, i + 1)
@@ -357,12 +366,20 @@ def plot_channel_funnels(channel_funnels: dict[str, 'pd.DataFrame']) -> None:
             ax.text(b.get_width() + max_v * 0.02, b.get_y() + b.get_height() / 2,
                     txt, va='center', fontsize=fs, color=clr, fontweight=fw)
 
-        ax.set_xlim(0, max_v * 1.38)
+        ax.set_xlim(0, max_v * 1.42)
+
+        # 瓶颈类型标注 — 在子图右下角加文字
+        bn_text = bottleneck_label_map.get(ch, '')
+        ax.text(0.97, 0.03, bn_text, transform=ax.transAxes,
+                ha='right', va='bottom', fontsize=8.5, fontweight='bold',
+                color='#922B21',
+                bbox=dict(boxstyle='round,pad=0.4', facecolor='#FDEDEC',
+                          edgecolor='#E6B0AA', alpha=0.9))
 
     fig.delaxes(fig.add_subplot(2, 3, 6))
-    fig.suptitle('各渠道专属漏斗对比', fontsize=18, fontweight='bold',
-                 color=C_DARK, y=1.02)
-    fig.text(0.5, 0.97, '深色柱 = 该渠道瓶颈环节，浅色柱 = 非瓶颈（同色系）',
+    fig.suptitle('各渠道专属漏斗对比 — 不同渠道不同瓶颈，不同策略',
+                 fontsize=18, fontweight='bold', color=C_DARK, y=1.02)
+    fig.text(0.5, 0.97, '深色柱 = 该渠道瓶颈环节（含优化方向）  |  浅色柱 = 非瓶颈',
              fontsize=12, color=C_GREY, ha='center', va='center')
     fig.tight_layout()
     _save(fig, '03_channel_funnels')
@@ -643,22 +660,35 @@ def plot_churn_by_channel(churn_matrix: 'pd.DataFrame') -> None:
 # 10 — PIE 优先级矩阵
 # ═══════════════════════════════════════════════════════════
 def plot_pie_matrix(pie_df: 'pd.DataFrame') -> None:
-    """PIE 优先级矩阵 — 气泡图 (X=Potential, Y=Importance, 大小=PIE)"""
-    fig, ax = plt.subplots(figsize=(10, 7))
+    """PIE 优先级矩阵 — 气泡图 (X=Potential, Y=Importance, 大小=PIE) + ROI 标注"""
+
+    # ROI 速查 (from cro_strategy.md, one-time cost vs annual return)
+    roi_map = {
+        '详情页 → 购物车': 'ROI 1.5-3:1\n投入¥14万/年挽回¥20-40万',
+        '列表页 → 详情页': 'ROI >10:1\n投入¥8.5万/年挽回¥50-80万',
+        '购物车 → 结算页': 'ROI >10:1 (速赢)\n投入¥4万/年挽回¥5-10万',
+        '首页 → 列表页': 'ROI >10:1\n投入¥4.5万/年挽回¥3-6万',
+    }
+
+    fig, ax = plt.subplots(figsize=(12, 8))
     x = pie_df['Potential'].values
     y = pie_df['Importance'].values
     sizes = pie_df['PIE得分'].values * 5
     pie_labels = [l.replace(' → ', '→') for l in pie_df['漏斗环节']]
+    full_labels = pie_df['漏斗环节'].tolist()
     pie_scores = pie_df['PIE得分'].values.astype(int)
     ease_vals = pie_df['Ease'].values.astype(int)
 
     ax.scatter(x, y, s=sizes, c=C_BLUE, alpha=0.65,
                edgecolors=C_DARK, linewidth=1.0, zorder=4)
 
-    for rank, (xi, yi, label, score, e) in enumerate(zip(x, y, pie_labels, pie_scores, ease_vals), 1):
-        ax.annotate(f'#{rank} {label}\nPIE={score} (Ease={e})',
-                    (xi, yi), textcoords='offset points', xytext=(0, 12),
-                    ha='center', fontsize=9, fontweight='bold', color=C_DARK)
+    for rank, (xi, yi, label, score, e, full_lb) in enumerate(
+            zip(x, y, pie_labels, pie_scores, ease_vals, full_labels), 1):
+        roi_text = roi_map.get(full_lb, '')
+        ax.annotate(f'#{rank} {label}\nPIE={score} (Ease={e})\n{roi_text}',
+                    (xi, yi), textcoords='offset points', xytext=(0, 14),
+                    ha='center', fontsize=8, fontweight='bold', color=C_DARK,
+                    linespacing=1.2)
 
     # 象限分割线
     ax.axhline(y=5, color=C_GREY, linestyle=':', alpha=0.4, zorder=1)
@@ -668,9 +698,9 @@ def plot_pie_matrix(pie_df: 'pd.DataFrame') -> None:
 
     ax.set_xlabel('损失潜力 (Potential)', fontsize=12)
     ax.set_ylabel('流量重要性 (Importance)', fontsize=12)
-    ax.set_title('PIE 优先级矩阵', fontsize=15, pad=14)
-    ax.set_xlim(0, 11)
-    ax.set_ylim(0, 11)
+    ax.set_title('PIE 优先级矩阵 + ROI 预估', fontsize=15, pad=14)
+    ax.set_xlim(0, 11.5)
+    ax.set_ylim(0, 11.5)
     ax.tick_params(left=False, bottom=False)
     fig.tight_layout()
     _save(fig, '10_pie_matrix')
@@ -1043,6 +1073,140 @@ def plot_visit_cohort_heatmap(retention_matrix: 'pd.DataFrame') -> None:
     ax.set_ylabel('首次访问月份 (Cohort)', fontsize=12, labelpad=10)
     fig.tight_layout()
     _save(fig, '16b_visit_cohort_heatmap')
+
+
+# ═══════════════════════════════════════════════════════════
+# 17 — Hero KPI 摘要卡
+# ═══════════════════════════════════════════════════════════
+
+def plot_hero_kpi(loss_df: 'pd.DataFrame') -> None:
+    """Hero KPI 摘要图 — 大字 ¥933 万损失 + 瓶颈定位，30 秒叙事线第一帧"""
+    total_loss = loss_df['估算损失金额'].sum()
+    pdp_row = loss_df[loss_df['漏斗环节'].str.contains('详情页')]
+    if not pdp_row.empty:
+        pdp_loss = pdp_row.iloc[0]['估算损失金额']
+        pdp_rate = pdp_row.iloc[0]['环节流失率(%)']
+    else:
+        pdp_loss, pdp_rate = 0, 0
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 10)
+    ax.axis('off')
+
+    # 主卡背景 (双层实现粗边框效果)
+    rect_outer = plt.Rectangle((0.3, 0.3), 9.4, 9.4, linewidth=4,
+                                edgecolor='#1B4F72', facecolor='none', zorder=0)
+    rect = plt.Rectangle((0.5, 0.5), 9, 9, linewidth=2, edgecolor='#5499C7',
+                          facecolor='#F8FAFB', zorder=1)
+    ax.add_patch(rect_outer)
+    ax.add_patch(rect)
+
+    # 大字: 总损失金额
+    ax.text(5, 7.2, f'¥{total_loss:,.0f}', ha='center', va='center',
+            fontsize=64, fontweight='bold', color='#922B21')
+
+    # 标签
+    ax.text(5, 5.3, '年预估转化损失', ha='center', va='center',
+            fontsize=18, color='#5D6D7E')
+
+    # 瓶颈定位
+    ax.text(5, 3.3, f'核心瓶颈: 详情页→购物车 交叉到达率仅 25.81%',
+            ha='center', va='center', fontsize=13, fontweight='bold', color=C_DARK)
+    ax.text(5, 2.3, f'该环节年损失 ¥{pdp_loss:,.0f}（占全链路 {pdp_loss/total_loss*100:.0f}%）'
+            f'  |  74% 用户看完没加购',
+            ha='center', va='center', fontsize=11, color='#7F8C8D')
+
+    # 底部策略提示
+    ax.text(5, 1.0, 'P0 优先级: 详情页改版  |  预期 ROI 1.5-3:1  |  详见 PIE 矩阵 & CRO 策略文档',
+            ha='center', va='center', fontsize=10, color=C_BLUE, style='italic')
+
+    fig.tight_layout(pad=0)
+    _save(fig, '17_hero_kpi')
+
+
+# ═══════════════════════════════════════════════════════════
+# 18 — ROI 对比图 (一次性成本 vs 年挽回收入)
+# ═══════════════════════════════════════════════════════════
+
+def plot_roi_comparison(sim_df: 'pd.DataFrame', loss_df: 'pd.DataFrame') -> None:
+    """ROI 对比柱状图 — 一次性投入 vs 年预期挽回，从 what-if 模拟 + CRO 策略成本数据生成"""
+
+    # 策略成本 (from cro_strategy.md)
+    cost_map = {
+        '详情页 → 购物车': 140_000,
+        '列表页 → 详情页': 85_000,
+        '购物车 → 结算页': 40_000,
+        '首页 → 列表页': 45_000,
+    }
+    # 短标签
+    short_label = {
+        '详情页 → 购物车': '详情页→购物车',
+        '列表页 → 详情页': '列表页→详情页',
+        '购物车 → 结算页': '购物车→结算页',
+        '首页 → 列表页': '首页→列表页',
+    }
+
+    # 匹配 sim_df 与 cost_map
+    sim_rows = []
+    for _, row in sim_df.iterrows():
+        label = row['优化环节']
+        recovered = row['预期增量收入']
+        cost = cost_map.get(label, 0)
+        sim_rows.append({
+            'label': short_label.get(label, label),
+            'cost': cost,
+            'recovered': recovered,
+            'roi_ratio': recovered / cost if cost > 0 else 0,
+        })
+
+    # 按 ROI 排序
+    sim_rows.sort(key=lambda r: r['roi_ratio'], reverse=True)
+    labels = [r['label'] for r in sim_rows]
+    costs = [r['cost'] for r in sim_rows]
+    recovered = [r['recovered'] for r in sim_rows]
+    rois = [r['roi_ratio'] for r in sim_rows]
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    x = np.arange(len(labels))
+    w = 0.32
+
+    bars_cost = ax.bar(x - w/2, [c/10000 for c in costs], w,
+                       color='#D55E00', alpha=0.82, edgecolor='white',
+                       linewidth=1, label='一次性投入 (万元)', zorder=3)
+    bars_gain = ax.bar(x + w/2, [r/10000 for r in recovered], w,
+                       color='#009E73', alpha=0.82, edgecolor='white',
+                       linewidth=1, label='年预期挽回 (万元)', zorder=3)
+
+    # 标注金额和 ROI
+    for i in range(len(labels)):
+        cy = costs[i] / 10000
+        ry = recovered[i] / 10000
+        # 成本标注
+        ax.text(i - w/2, cy + max(costs)/10000 * 0.02,
+                f'¥{costs[i]/10000:.1f}万', ha='center', fontsize=9,
+                color='#922B21', fontweight='bold')
+        # 收入标注
+        ax.text(i + w/2, ry + max(recovered)/10000 * 0.02,
+                f'¥{recovered[i]/10000:.1f}万', ha='center', fontsize=9,
+                color='#1E8449', fontweight='bold')
+        # ROI ratio 标注在两组柱之间顶部
+        top_y = max(cy, ry)
+        ax.text(i, top_y + max(max(costs), max(recovered))/10000 * 0.11,
+                f'ROI {rois[i]:.1f}:1', ha='center', fontsize=11,
+                fontweight='bold', color=C_DARK,
+                bbox=dict(boxstyle='round,pad=0.25', facecolor='#FEF9E7',
+                          edgecolor='#E69F00', alpha=0.85))
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, fontsize=11)
+    ax.set_ylabel('金额 (万元)', fontsize=12, labelpad=10)
+    ax.set_title('CRO 策略 ROI 对比 — 一次性投入 vs 年预期挽回收入',
+                 fontsize=15, pad=18, color=C_DARK)
+    ax.legend(fontsize=11, framealpha=0.9, edgecolor=CL_GREY, loc='upper left')
+    ax.set_ylim(0, max(max(costs), max(recovered))/10000 * 1.35)
+    fig.tight_layout()
+    _save(fig, '18_roi_comparison')
 
 
 # ═══════════════════════════════════════════════════════════

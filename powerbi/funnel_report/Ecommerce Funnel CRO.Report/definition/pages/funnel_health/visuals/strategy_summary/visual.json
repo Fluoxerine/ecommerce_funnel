@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "strategy_summary",
+  "position": {
+    "x": 0,
+    "y": 0,
+    "z": 4,
+    "height": 60,
+    "width": 1280,
+    "tabOrder": 4
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "核心结论: 年损失 ¥933 万 → 详情页→购物车是全局瓶颈 (交叉到达率 25.81%) → P0 优先详情页改版, 预期 ROI 1.5-3:1 → 不同渠道需不同策略",
+                    "type": "textRun",
+                    "textRunObjectDefaults": {
+                      "fontFamily": "Microsoft YaHei",
+                      "fontSize": "18pt",
+                      "fontWeight": "bold",
+                      "color": "#1B4F72"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

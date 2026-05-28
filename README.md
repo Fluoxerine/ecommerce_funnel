@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/Python-3.13+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![SciPy](https://img.shields.io/badge/SciPy-Statistical_Tests-8CAAE6?logo=scipy&logoColor=white)](https://scipy.org/)
-[![Matplotlib](https://img.shields.io/badge/Matplotlib-25_Charts-11557C?logo=python&logoColor=white)](https://matplotlib.org/)
+[![Matplotlib](https://img.shields.io/badge/Matplotlib-28_Charts-11557C?logo=python&logoColor=white)](https://matplotlib.org/)
 [![Plotly](https://img.shields.io/badge/Plotly-Interactive-3F4F75?logo=plotly&logoColor=white)](https://plotly.com/)
 [![Pandas](https://img.shields.io/badge/Pandas-Data_Wrangling-150458?logo=pandas&logoColor=white)](https://pandas.pydata.org/)
 [![Power BI](https://img.shields.io/badge/Power_BI-PBIR_Report-F2C811?logo=powerbi&logoColor=black)](https://powerbi.microsoft.com/)
@@ -146,6 +146,14 @@
 
 > **年损失 ¥933 万**（首页 KPI）→ **74% 的用户在详情页看完没加购**（瓶颈定位）→ **详情页改版是 P0，预期 ROI 1.5-3:1**（可执行策略）→ **不同渠道需不同方案**：Social / Paid Search 优化详情页，Email / Direct 优化结算页（差异化落地）。
 
+以下图表和 Power BI 报表完整支撑这条叙事线的每个节点：
+
+### Hero KPI — 一图定调
+
+大字 ¥9,328,840 + 瓶颈定位 + 策略提示。面试官看这第一张图就知道项目做了什么、值多少钱。
+
+![Hero KPI](output/charts/17_hero_kpi.png)
+
 ### 页面漏斗 — 一图定位瓶颈
 
 详情页→购物车交叉到达率仅 25.81%。74% 的用户在详情页看完后没有把商品加入购物车。这是整个漏斗的断裂带。
@@ -160,7 +168,7 @@
 
 ### 渠道漏斗对比 — 不同渠道需要不同策略
 
-三个渠道（Social、Paid Search、Organic）的核心瓶颈在详情页→购物车，但 Email 和 Direct 渠道的瓶颈在购物车→结算页——邮件链接直达购物车后，结算体验成为断裂带。渠道不同，优化重点也不同。
+三个渠道（Social、Paid Search、Organic）的核心瓶颈在详情页→购物车，但 Email 和 Direct 渠道的瓶颈在购物车→结算页——邮件链接直达购物车后，结算体验成为断裂带。图中每个子图已显式标注瓶颈类型和优化方向，不再需要读者自行解读深色柱含义。
 
 ![渠道漏斗](output/charts/03_channel_funnels.png)
 
@@ -178,9 +186,15 @@
 
 ### PIE 优先级矩阵 — 告诉你先做什么
 
-PIE = Potential × Importance × Ease（WiderFunnel 方法论，10 分制）。详情页→购物车得分最高（P=4.0, I=5.1, E=6.0 → 122 分），落在高影响+高易实施象限，是 P0 中的 P0。购物车→结算页虽然 Ease 最高（8.0），但 Potential 和 Importance 太低，优先级反而最低。
+PIE = Potential × Importance × Ease（WiderFunnel 方法论，10 分制）。详情页→购物车得分最高（P=4.0, I=5.1, E=6.0 → 122 分），落在高影响+高易实施象限。每个气泡已标注 ROI 预估（一次性投入 vs 年挽回收入），实现优先级 + 回报率在一张图上同时呈现。
 
 ![PIE矩阵](output/charts/10_pie_matrix.png)
+
+### ROI 对比 — 投入产出可视化
+
+一次性投入 vs 年预期挽回收入，基于 What-If 模拟数据（"PDP→Cart 提升 10pp"等三个场景）+ cro_strategy.md 实施成本。购物车→结算页 ROI 最高（>10:1，速赢），详情页→购物车绝对回报最大但投入也最高。
+
+![ROI对比](output/charts/18_roi_comparison.png)
 
 ### 新老用户漏斗对比 — 两类用户的行为差异
 
@@ -398,14 +412,14 @@ ecommerce_funnel_analysis/
 │   ├── data_loader.py        # 五表加载 + 探查 + 质量报告
 │   ├── data_cleaning.py      # 会话异常值清洗 + 漏斗宽表
 │   ├── funnel_analysis.py    # 20+ 分析函数 (双漏斗/多维诊断/统计检验/损失量化)
-│   ├── visualization.py      # 23 张图表 (matplotlib + plotly)
+│   ├── visualization.py      # 28 张图表 (matplotlib + plotly)
 │   └── main.py               # 主入口 (支持 --skip-viz / --output)
 ├── sql/                      # 8 个独立 SQL 脚本 (MySQL 8.4)
 ├── powerbi/                  # Power BI PBIR 报表 (5 页交互式 + PNG 预览)
 ├── docs/                     # 分析文档 + 多 AI 交叉 review 记录
 ├── operations/               # CRO 策略详情 (含实施成本 + ROI 估算)
 ├── .openclaw/                # OpenClaw 工作区配置
-├── output/charts/            # 23 张可视化图表
+├── output/charts/            # 28 张可视化图表
 └── tests/                    # pytest 单元测试 + 集成测试
 ```
 
