@@ -160,6 +160,18 @@
 
 ![页面漏斗](output/charts/01_page_funnel.png)
 
+### 严格路径漏斗 — 用户真的按标准路径走吗？
+
+不。必须按 Home→PLP→PDP→Cart→Checkout 时间顺序访问时，仅 **0.02%**（73/300,782）的会话走完全程。95.8% 的 PDP 流量来自深链（广告/搜索/邮件直达），不过首页和列表页。这张图是"为什么需要双漏斗"的直观证据。
+
+![严格漏斗](output/charts/01b_strict_page_funnel.png)
+
+### 行为漏斗 — 页面之外的互动深度
+
+浏览→点击→加购→购买的行为转化链。浏览→点击仅 54.4%，意味着近一半用户看完页面后没有任何点击行为——这是互动意愿的第一道坎。行为漏斗与页面漏斗互补：页面漏斗告诉你"用户到了哪"，行为漏斗告诉你"用户到了之后做了什么"。
+
+![行为漏斗](output/charts/02_event_funnel.png)
+
 ### 双漏斗对照 — 为什么单一模型不够用
 
 左：宽松覆盖，每个页面独立统计到达数；右：严格路径，必须按顺序经过。两者差异巨大——仅 4.2% 的 PDP 流量来自标准路径。
@@ -217,27 +229,27 @@ PIE = Potential × Importance × Ease（WiderFunnel 方法论，10 分制）。�
 PBIR 格式报表，双击 `Ecommerce Funnel CRO.pbip` 即可在 Power BI Desktop 中打开，支持交叉筛选和交互式下钻。[powerbi/HOWTO.md](powerbi/HOWTO.md) 有完整的打开方式说明。
 
 **第 1 页 — 漏斗健康仪表板 (Funnel Health)**
-KPI 概览（总会话/转化率/年损失）+ 页面漏斗 + 行为漏斗 + 三年月度趋势。一页回答"发生了什么"。
+顶部 KPI 卡：总会话 **633,450** / 转化率 **15.08%** / 年损失 **¥933 万**。中部：页面漏斗（PDP→Cart 交叉到达率 25.81%）+ 行为漏斗（浏览→点击 54.4%）。底部：三年月度趋势（2021 年 CR 16.97% → 2023 年 7.98%，降幅 53%）。一页覆盖"发生了什么"的全部关键数字。
 
 ![PBI Page 1](powerbi/funnel_report/Ecommerce%20Funnel%20CRO_260526_页面_1.png)
 
 **第 2 页 — 流量质量 (Traffic Quality)**
-按渠道/设备/国家拆解转化率和流量占比，横向对比定位不同维度的瓶颈差异。
+渠道拆解：Organic 占 47% 流量但 CR 仅 **12.98%**（量最大但质最低），Social CR 最高 **24.38%** 但仅占 15% 流量。设备拆解：Desktop CR **16.32%** vs Mobile **13.84%**。国家间 CR 差异不显著（Cramér's V < 0.01，p=0.63），不需要分国家策略。
 
 ![PBI Page 2](powerbi/funnel_report/Ecommerce%20Funnel%20CRO_260526_页面_2.png)
 
 **第 3 页 — 流失诊断 (Churn Diagnostics)**
-各环节流失瀑布 + 流失用户行为特征对比表（含 Cohen's d 效应量）+ 渠道×设备维度拆解。
+瀑布图：PDP→Cart 流失 **24 万**会话（环节流失率 74.2%），为全链路最大断裂带。流失特征表：流失用户平均事件数 3.32 vs 转化用户 4.47（Cohen's d=**-0.74**，中等偏大效应量）。渠道×设备热力图交叉定位不同切面的流失模式。
 
 ![PBI Page 3](powerbi/funnel_report/Ecommerce%20Funnel%20CRO_260526_页面_3.png)
 
 **第 4 页 — 优先级矩阵 (Priority Matrix)**
-PIE 评分条形图 + 策略优先级表（P0/P1/P2/P3 + 速赢标注），回答"先做什么、ROI 多少"。
+PIE 条形图 + 数据明细表：PDP→Cart **PIE=122**（P0，P=4.0/I=5.1/E=6.0），PLP→PDP PIE=56（P1），首页→PLP PIE=54（P2），Cart→Checkout **PIE=17**（P3——Ease 最高 8.0 但 Potential 太低）。表内标注速赢项目和避免投入项。
 
 ![PBI Page 4](powerbi/funnel_report/Ecommerce%20Funnel%20CRO_260526_页面_4.png)
 
 **第 5 页 — 用户分析 (User Analysis)**
-忠诚度等级 × 转化率 + 获客渠道 × 长期转化 + 新老用户漏斗对比，回答"不同用户群的行为差异在哪"。
+忠诚度 × 转化：Platinum CR **58.07%** vs Bronze ~10%，高忠诚度用户是核心资产。获客渠道 × 长期转化：Referral 获客的用户长期转化最高。新老用户对比：老用户浏览→购买转化率（**21.12%**）是新用户（**12.48%**）的 1.7 倍——差异在行为深度而非页面路径。
 
 ![PBI Page 5](powerbi/funnel_report/Ecommerce%20Funnel%20CRO_260526_页面_5.png)
 
